@@ -1,0 +1,530 @@
+{% include 'header.html' %}
+{% include 'navbar.html' %}
+{% include 'sidebar.html' %}
+{% load static %}
+
+<link rel="stylesheet" href="{% static '../static/dist/css/myCustome.css' %}">
+
+<div class="content-wrapper" style="background-image:url('{% static '../static/dist/img/SriKrishnabackgroundimage3.jpg' %}');background-size:cover; min-height:100vh;">
+
+  <!-- Header -->
+  <div class="content-header mb-3">
+    <div class="container-fluid bg-white p-2 rounded" style="width:99%">
+      <div class="row mb-2">
+        <div class="col-sm-6"><h1 class="m-0">Create Vendor Payouts</h1></div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="/" class="text-danger">Home</a></li>
+            <li class="breadcrumb-item"><a href="/admin/vendor-payouts/" class="text-danger">Vendor Payouts</a></li>
+            <li class="breadcrumb-item active">Create Payouts</li>
+          </ol>
+        </div>
+      </div><hr>
+    </div>
+  </div>
+
+  <div class="row ml-2 mr-2 mt-2">
+
+    <!-- ── LEFT: Filters + Order Selection ───────────────────────────── -->
+    <div class="col-lg-8 col-12 mb-4">
+      <div class="card shadow-sm vr-card">
+
+        <div class="card-header vr-card-header">
+          <div class="d-flex flex-wrap justify-content-between align-items-center" style="gap:10px;">
+            <div class="d-flex align-items-center">
+              <div class="vr-header-icon">
+                <i class="fas fa-list-check text-white" style="font-size:15px;"></i>
+              </div>
+              <div>
+                <p class="vr-header-title mb-0">Delivered Orders</p>
+                <small class="vr-header-subtitle">Select orders to generate payout records</small>
+              </div>
+            </div>
+            <div class="d-flex flex-wrap align-items-center" style="gap:8px;">
+              <!-- Restaurant filter -->
+              <select id="filterRestaurant" class="form-control form-control-sm cp-filter" onchange="filterOrders()">
+                <option value="">All Restaurants</option>
+                {% for r in restaurants %}
+                  <option value="{{ r.id }}">{{ r.restaurantname }}</option>
+                {% endfor %}
+              </select>
+              <!-- Date filter -->
+              <input type="date" id="filterDate" class="form-control form-control-sm cp-filter" onchange="filterOrders()">
+              <!-- Search -->
+              <div class="vr-search-wrapper">
+                <i class="fas fa-search"></i>
+                <input type="text" id="orderSearch" placeholder="Search order…" class="form-control form-control-sm vr-search-input" oninput="filterOrders()">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Select-all bar -->
+        <div class="cp-select-bar" id="selectBar">
+          <label class="cp-select-all-label">
+            <input type="checkbox" id="selectAllOrders" onchange="toggleSelectAll(this)">
+            <span>Select All Visible</span>
+          </label>
+          <span class="cp-selected-badge" id="selectedBadge">0 selected</span>
+          <button class="cp-clear-btn" onclick="clearSelection()">
+            <i class="fas fa-times mr-1"></i>Clear
+          </button>
+        </div>
+
+        <div class="card-body p-0">
+          <div id="orderListContainer">
+            <div class="cp-loading" id="loadingState">
+              <i class="fas fa-spinner fa-spin" style="font-size:24px; color:#A82323;"></i>
+              <p style="margin-top:10px; color:#888; font-size:13px;">Loading delivered orders…</p>
+            </div>
+            <div id="orderList" style="display:none;"></div>
+            <div class="vr-empty-state" id="emptyState" style="display:none;">
+              <i class="fas fa-check-double" style="font-size:32px; color:#A82323;"></i>
+              <p class="vr-empty-title">No Pending Orders Found</p>
+              <small class="vr-empty-subtitle">All delivered orders already have payout records.</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="vr-card-footer">
+          <small class="vr-footer-count">
+            <i class="fas fa-box-open mr-1" style="color:#A82323;"></i>
+            Showing <strong id="visibleCount">0</strong> order(s) without payout
+          </small>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── RIGHT: Summary + Create Panel ─────────────────────────────── -->
+    <div class="col-lg-4 col-12 mb-4">
+
+      <!-- Summary Card -->
+      <div class="card shadow-sm vr-card mb-3" id="summaryCard">
+        <div class="card-header vr-card-header">
+          <div class="d-flex align-items-center">
+            <div class="vr-header-icon">
+              <i class="fas fa-calculator text-white" style="font-size:15px;"></i>
+            </div>
+            <div>
+              <p class="vr-header-title mb-0">Payout Summary</p>
+              <small class="vr-header-subtitle">Preview before creating</small>
+            </div>
+          </div>
+        </div>
+        <div class="card-body" style="padding:16px;">
+
+          <div class="cp-summary-row">
+            <span class="cp-summary-key"><i class="fas fa-shopping-bag mr-1" style="color:#A82323;"></i>Selected Orders</span>
+            <span class="cp-summary-val" id="sumOrders">0</span>
+          </div>
+          <div class="cp-summary-row">
+            <span class="cp-summary-key"><i class="fas fa-rupee-sign mr-1" style="color:#A82323;"></i>Total Order Value</span>
+            <span class="cp-summary-val" id="sumOrderAmt">₹0.00</span>
+          </div>
+          <div class="cp-summary-row">
+            <span class="cp-summary-key"><i class="fas fa-percent mr-1" style="color:#A82323;"></i>Est. Commission</span>
+            <span class="cp-summary-val" style="color:#A82323;" id="sumCommission">₹0.00</span>
+          </div>
+          <div class="cp-summary-divider"></div>
+          <div class="cp-summary-row">
+            <span class="cp-summary-key" style="font-size:13px; font-weight:800; color:#222;">Vendor Earnings</span>
+            <span class="cp-summary-val" style="font-size:15px; color:#28a745;" id="sumEarning">₹0.00</span>
+          </div>
+
+          <!-- Commission rule note -->
+          <div class="cp-commission-note" id="commissionNote">
+            <i class="fas fa-info-circle mr-1"></i>
+            Commission will be calculated per restaurant rule or global default.
+          </div>
+
+          <!-- Create Button -->
+          <button class="btn cp-create-btn w-100 mt-3" id="createBtn" onclick="createPayouts()" disabled>
+            <i class="fas fa-plus-circle mr-1"></i>
+            <span id="createBtnText">Create Payout Records</span>
+          </button>
+
+          <div id="createAlert" style="display:none; margin-top:10px;"></div>
+
+        </div>
+      </div>
+
+      <!-- How it works -->
+      <div class="card shadow-sm" style="border-radius:10px; border-left:4px solid #A82323;">
+        <div class="card-body py-3 px-3">
+          <p style="font-size:12px; font-weight:700; color:#A82323; margin-bottom:8px;">
+            <i class="fas fa-info-circle mr-1"></i>How it works
+          </p>
+          <div class="cp-step"><span class="cp-step-num">1</span><span>Filter &amp; select delivered orders without a payout</span></div>
+          <div class="cp-step"><span class="cp-step-num">2</span><span>Preview the total commission &amp; vendor earning</span></div>
+          <div class="cp-step"><span class="cp-step-num">3</span><span>Click <strong>Create Payout Records</strong> — records are saved as <em>Pending</em></span></div>
+          <div class="cp-step"><span class="cp-step-num">4</span><span>Go to <a href="/vendor-payouts/" class="text-danger">Vendor Payouts</a> to process &amp; mark as Paid</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── Confirm Modal ──────────────────────────────────────────────────────── -->
+<div class="modal fade" id="confirmModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:420px;" role="document">
+    <div class="modal-content" style="border-radius:12px; overflow:hidden;">
+      <div class="modal-header" style="background:#A82323; padding:14px 20px;">
+        <h6 class="modal-title text-white mb-0">
+          <i class="fas fa-check-circle mr-2"></i>Confirm Payout Creation
+        </h6>
+        <button type="button" class="close text-white" data-dismiss="modal" style="opacity:1;"><span>&times;</span></button>
+      </div>
+      <div class="modal-body text-center" style="padding:24px;">
+        <i class="fas fa-money-bill-wave" style="font-size:38px; color:#A82323; margin-bottom:12px; display:block;"></i>
+        <p style="font-size:14px; font-weight:600; color:#333; margin-bottom:4px;" id="confirmMsg">
+          Create payout records for 0 orders?
+        </p>
+        <p style="font-size:12px; color:#888; margin:0;">
+          Records will be created with status <strong>Pending</strong>. You can process them from the payouts list.
+        </p>
+      </div>
+      <div class="modal-footer" style="justify-content:center; gap:10px; border-top:1px solid #f0f0f0; padding:14px;">
+        <button class="btn btn-sm btn-secondary" data-dismiss="modal" style="border-radius:6px; font-size:12px; min-width:80px;">Cancel</button>
+        <button class="btn btn-sm" id="confirmCreateBtn"
+          style="background:#A82323; color:#fff; border-radius:6px; font-size:12px; min-width:140px;">
+          <i class="fas fa-plus-circle mr-1"></i>Yes, Create
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Styles ─────────────────────────────────────────────────────────────── -->
+<style>
+  /* ── Filters ── */
+  .cp-filter {
+    border-radius:6px; font-size:12px; font-weight:600; color:#555;
+    border:1.5px solid #e0e0e0; height:30px !important; min-width:130px;
+  }
+  .cp-filter:focus { border-color:#A82323; box-shadow:none; outline:none; }
+
+  /* ── Select bar ── */
+  .cp-select-bar {
+    display:flex; align-items:center; gap:12px;
+    background:#fff9f9; border-bottom:1px solid #f0e0e0;
+    padding:8px 16px;
+  }
+  .cp-select-all-label {
+    display:flex; align-items:center; gap:6px;
+    font-size:12px; font-weight:700; color:#444; cursor:pointer; margin:0;
+  }
+  .cp-selected-badge {
+    background:#A82323; color:#fff;
+    border-radius:20px; padding:2px 10px;
+    font-size:11px; font-weight:700; margin-left:auto;
+  }
+  .cp-clear-btn {
+    background:none; border:1.5px solid #e0e0e0; border-radius:6px;
+    font-size:11px; font-weight:700; color:#888; padding:2px 10px; cursor:pointer;
+    transition:all 0.2s;
+  }
+  .cp-clear-btn:hover { border-color:#A82323; color:#A82323; }
+
+  /* ── Order Card ── */
+  .cp-order-card {
+    display:flex; align-items:flex-start; gap:12px;
+    padding:14px 16px; border-bottom:1px solid #f5f5f5;
+    cursor:pointer; transition:background 0.15s;
+  }
+  .cp-order-card:hover { background:#fffaf9; }
+  .cp-order-card.cp-selected { background:#fff3f3; border-left:3px solid #A82323; }
+  .cp-order-card:last-child { border-bottom:none; }
+
+  .cp-order-check { margin-top:2px; cursor:pointer; flex-shrink:0; }
+
+  .cp-order-body { flex:1; min-width:0; }
+  .cp-order-id   { font-size:13px; font-weight:800; color:#222; }
+  .cp-order-rest { font-size:12px; color:#555; font-weight:600; margin:2px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .cp-order-meta { font-size:11px; color:#999; }
+
+  .cp-order-right { text-align:right; flex-shrink:0; }
+  .cp-order-amt  { font-size:14px; font-weight:800; color:#222; }
+  .cp-order-date { font-size:11px; color:#aaa; }
+
+  /* ── Loading ── */
+  .cp-loading { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px; }
+
+  /* ── Summary ── */
+  .cp-summary-row {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:8px 0; border-bottom:1px solid #f5f5f5;
+  }
+  .cp-summary-row:last-child { border-bottom:none; }
+  .cp-summary-key { font-size:12px; font-weight:600; color:#666; }
+  .cp-summary-val { font-size:13px; font-weight:800; color:#222; }
+  .cp-summary-divider { border-top:2px solid #f0f0f0; margin:8px 0; }
+
+  .cp-commission-note {
+    background:#fff8e1; border:1px solid #ffe082; border-radius:6px;
+    padding:8px 10px; font-size:11px; color:#856404;
+    margin-top:10px; line-height:1.5;
+  }
+
+  /* ── Create button ── */
+  .cp-create-btn {
+    background:#A82323; color:#fff; border:none; border-radius:8px;
+    font-size:13px; font-weight:700; height:42px; transition:background 0.2s;
+  }
+  .cp-create-btn:hover:not([disabled]) { background:#8e1c1c; color:#fff; }
+  .cp-create-btn[disabled] { background:#ccc; cursor:not-allowed; }
+
+  /* ── Steps ── */
+  .cp-step {
+    display:flex; align-items:flex-start; gap:8px;
+    font-size:12px; color:#555; margin-bottom:7px; line-height:1.5;
+  }
+  .cp-step:last-child { margin-bottom:0; }
+  .cp-step-num {
+    background:#A82323; color:#fff; border-radius:50%;
+    width:18px; height:18px; min-width:18px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:10px; font-weight:800; margin-top:1px;
+  }
+</style>
+
+<!-- ── Scripts ────────────────────────────────────────────────────────────── -->
+<script>
+  let allOrders    = [];   // all delivered orders without payout (from API)
+  let visibleOrders = [];  // after client-side filter
+  let selectedIds  = new Set();
+
+  // ── Helpers ──────────────────────────────────────────────────────────
+  function fmt(iso) {
+    if (!iso) return '—';
+    const d  = new Date(iso);
+    const mo = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    return `${String(d.getDate()).padStart(2,'0')} ${mo[d.getMonth()]} ${d.getFullYear()}`;
+  }
+  function fmtMoney(v) {
+    return '₹' + parseFloat(v || 0).toLocaleString('en-IN', { minimumFractionDigits:2, maximumFractionDigits:2 });
+  }
+  function getCookie(n) {
+    let c = null;
+    document.cookie.split(';').forEach(s => {
+      const [k, v] = s.trim().split('=');
+      if (k === n) c = decodeURIComponent(v);
+    });
+    return c;
+  }
+
+  // ── Load unprocessed delivered orders ─────────────────────────────────
+  function loadOrders() {
+    fetch("{% url 'vendorPayoutPendingOrders' %}", {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(r => r.json())
+    .then(data => {
+      document.getElementById('loadingState').style.display = 'none';
+      if (data.status) {
+        allOrders = data.orders;
+        filterOrders();
+        document.getElementById('orderList').style.display = 'block';
+      }
+    })
+    .catch(err => {
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('orderList').style.display = 'block';
+      console.error(err);
+    });
+  }
+
+  // ── Client-side filter ────────────────────────────────────────────────
+  function filterOrders() {
+    const restId = document.getElementById('filterRestaurant').value;
+    const date   = document.getElementById('filterDate').value;
+    const search = document.getElementById('orderSearch').value.toLowerCase();
+
+    visibleOrders = allOrders.filter(o => {
+      if (restId && String(o.restaurant_id) !== restId) return false;
+      if (date) {
+        const od = new Date(o.created_at);
+        const fd = new Date(date);
+        if (od.toDateString() !== fd.toDateString()) return false;
+      }
+      if (search && !(
+        String(o.order_id).includes(search) ||
+        (o.restaurant_name || '').toLowerCase().includes(search)
+      )) return false;
+      return true;
+    });
+
+    renderOrderList();
+  }
+
+  // ── Render order cards ────────────────────────────────────────────────
+  function renderOrderList() {
+    const container = document.getElementById('orderList');
+    const empty     = document.getElementById('emptyState');
+    document.getElementById('visibleCount').textContent = visibleOrders.length;
+
+    if (visibleOrders.length === 0) {
+      container.style.display = 'none';
+      empty.style.display     = 'flex';
+      return;
+    }
+    container.style.display = 'block';
+    empty.style.display     = 'none';
+
+    container.innerHTML = visibleOrders.map(o => `
+      <div class="cp-order-card ${selectedIds.has(o.order_id) ? 'cp-selected' : ''}"
+           id="card-${o.order_id}" onclick="toggleOrder(${o.order_id})">
+        <input type="checkbox" class="cp-order-check" id="chk-${o.order_id}"
+               ${selectedIds.has(o.order_id) ? 'checked' : ''}
+               onclick="event.stopPropagation(); toggleOrder(${o.order_id})">
+        <div class="cp-order-body">
+          <div class="cp-order-id">#${o.order_id}</div>
+          <div class="cp-order-rest">
+            <i class="fas fa-store mr-1" style="color:#A82323; font-size:10px;"></i>${o.restaurant_name}
+          </div>
+          <div class="cp-order-meta">
+            <i class="fas fa-user mr-1"></i>${o.user_email || '—'}
+            &nbsp;·&nbsp;
+            <i class="fas fa-clock mr-1"></i>${fmt(o.created_at)}
+            &nbsp;·&nbsp;
+            <i class="fas fa-truck mr-1"></i>
+            <span style="color:#28a745; font-weight:700;">Delivered</span>
+          </div>
+        </div>
+        <div class="cp-order-right">
+          <div class="cp-order-amt">${fmtMoney(o.paid_amount)}</div>
+          <div class="cp-order-date">${fmt(o.delivered_time || o.created_at)}</div>
+        </div>
+      </div>
+    `).join('');
+
+    syncSelectAllCheckbox();
+  }
+
+  // ── Toggle single order ───────────────────────────────────────────────
+  function toggleOrder(orderId) {
+    if (selectedIds.has(orderId)) {
+      selectedIds.delete(orderId);
+    } else {
+      selectedIds.add(orderId);
+    }
+    const card = document.getElementById(`card-${orderId}`);
+    const chk  = document.getElementById(`chk-${orderId}`);
+    if (card) card.classList.toggle('cp-selected', selectedIds.has(orderId));
+    if (chk)  chk.checked = selectedIds.has(orderId);
+    updateSummary();
+    syncSelectAllCheckbox();
+  }
+
+  // ── Toggle all visible ────────────────────────────────────────────────
+  function toggleSelectAll(cb) {
+    visibleOrders.forEach(o => {
+      if (cb.checked) selectedIds.add(o.order_id);
+      else            selectedIds.delete(o.order_id);
+      const card = document.getElementById(`card-${o.order_id}`);
+      const chk  = document.getElementById(`chk-${o.order_id}`);
+      if (card) card.classList.toggle('cp-selected', cb.checked);
+      if (chk)  chk.checked = cb.checked;
+    });
+    updateSummary();
+  }
+
+  function clearSelection() {
+    selectedIds.clear();
+    renderOrderList();
+    updateSummary();
+  }
+
+  function syncSelectAllCheckbox() {
+    const sa  = document.getElementById('selectAllOrders');
+    const vis = visibleOrders.length;
+    const sel = visibleOrders.filter(o => selectedIds.has(o.order_id)).length;
+    sa.checked       = vis > 0 && sel === vis;
+    sa.indeterminate = sel > 0 && sel < vis;
+  }
+
+  // ── Update summary panel ──────────────────────────────────────────────
+  function updateSummary() {
+    const selected = allOrders.filter(o => selectedIds.has(o.order_id));
+    const totalAmt = selected.reduce((s, o) => s + parseFloat(o.paid_amount || 0), 0);
+    // Estimated commission shown from server data (pre-calculated)
+    const totalComm  = selected.reduce((s, o) => s + parseFloat(o.estimated_commission || 0), 0);
+    const totalEarn  = totalAmt - totalComm;
+
+    document.getElementById('sumOrders').textContent    = selected.length;
+    document.getElementById('sumOrderAmt').textContent  = fmtMoney(totalAmt);
+    document.getElementById('sumCommission').textContent = fmtMoney(totalComm);
+    document.getElementById('sumEarning').textContent   = fmtMoney(totalEarn > 0 ? totalEarn : 0);
+    document.getElementById('selectedBadge').textContent = `${selectedIds.size} selected`;
+
+    document.getElementById('createBtn').disabled = selectedIds.size === 0;
+  }
+
+  // ── Create payouts ────────────────────────────────────────────────────
+  function createPayouts() {
+    if (selectedIds.size === 0) return;
+    document.getElementById('confirmMsg').textContent =
+      `Create payout records for ${selectedIds.size} order(s)?`;
+    $('#confirmModal').modal('show');
+  }
+
+  document.getElementById('confirmCreateBtn').addEventListener('click', function () {
+    this.disabled = true;
+    this.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Creating…';
+
+    fetch("{% url 'vendorPayoutCreate' %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type':    'application/json',
+        'X-CSRFToken':     getCookie('csrftoken'),
+        'X-Requested-With':'XMLHttpRequest'
+      },
+      body: JSON.stringify({ order_ids: [...selectedIds] })
+    })
+    .then(r => r.json())
+    .then(data => {
+      $('#confirmModal').modal('hide');
+      this.disabled = false;
+      this.innerHTML = '<i class="fas fa-plus-circle mr-1"></i>Yes, Create';
+
+      const alertEl = document.getElementById('createAlert');
+      if (data.status) {
+        // Remove created orders from allOrders list
+        data.created_order_ids.forEach(id => {
+          allOrders = allOrders.filter(o => o.order_id !== id);
+          selectedIds.delete(id);
+        });
+        filterOrders();
+        updateSummary();
+
+        alertEl.innerHTML = `
+          <div class="alert alert-success py-2 px-3" style="font-size:12px; border-radius:8px;">
+            <i class="fas fa-check-circle mr-1"></i>
+            <strong>${data.created} payout(s)</strong> created successfully.
+            ${data.skipped > 0 ? `<br><small>${data.skipped} skipped (already exist).</small>` : ''}
+            <br><a href="/admin/vendor-payouts/" class="alert-link">View Payouts →</a>
+          </div>`;
+        alertEl.style.display = 'block';
+      } else {
+        alertEl.innerHTML = `
+          <div class="alert alert-danger py-2 px-3" style="font-size:12px; border-radius:8px;">
+            <i class="fas fa-times-circle mr-1"></i>${data.message}
+          </div>`;
+        alertEl.style.display = 'block';
+      }
+    })
+    .catch(() => {
+      $('#confirmModal').modal('hide');
+      this.disabled = false;
+      this.innerHTML = '<i class="fas fa-plus-circle mr-1"></i>Yes, Create';
+      alert('Network error. Please try again.');
+    });
+  });
+
+  // ── Init ──────────────────────────────────────────────────────────────
+  loadOrders();
+</script>
+
+{% include 'footer.html' %}
+{% include 'footer_link.html' %}

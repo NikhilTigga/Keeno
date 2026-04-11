@@ -1,0 +1,200 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Admin Login</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* Reset */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Roboto", sans-serif;
+        background: url("/static/dist/img/SriKrishnaLogginpage.jpg") no-repeat
+          center center fixed;
+        background-size: cover;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+
+      .login-box {
+        background: rgba(255, 255, 255, 0.2); /* more transparent */
+        padding: 50px 40px;
+        border-radius: 15px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15); /* lighter shadow */
+        width: 350px;
+        text-align: center;
+        transition:
+          transform 0.3s ease,
+          background 0.3s ease;
+        backdrop-filter: blur(1px); /* adds glass-like blur effect */
+      }
+
+      .login-box:hover {
+        transform: translateY(-5px);
+        background: rgba(255, 255, 255, 0.25); /* slightly brighter on hover */
+      }
+
+      .login-box h2 {
+        margin-bottom: 30px;
+        font-weight: 500;
+        color: #fff; /* white text looks better on transparent box */
+      }
+
+      input {
+        width: 100%;
+        padding: 12px 15px;
+        margin: 10px 0;
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        border-radius: 8px;
+        outline: none;
+        background: rgba(255, 255, 255, 0.3);
+        color: #fff;
+        transition:
+          border 0.3s,
+          background 0.3s;
+      }
+
+      input::placeholder {
+        color: rgba(255, 255, 255, 0.7);
+      }
+
+      input:focus {
+        border-color: #00bfff;
+        background: rgba(255, 255, 255, 0.4);
+      }
+
+      button {
+        width: 100%;
+        padding: 12px;
+        background: #00bfff;
+        color: #fff;
+        font-weight: 500;
+        border: none;
+        border-radius: 8px;
+        margin-top: 15px;
+        cursor: pointer;
+        transition: background 0.3s;
+      }
+
+      button:hover {
+        background: #009acd;
+      }
+
+      .error {
+        color: #ff6b6b;
+        margin-bottom: 15px;
+        font-size: 0.9em;
+      }
+
+      /* Responsive */
+      @media (max-width: 400px) {
+        .login-box {
+          width: 90%;
+          padding: 40px 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="login-box">
+      <h2 style="color: red">Admin Login</h2>
+      <hr />
+
+      <div class="error" id="errorBox"></div>
+
+      <form id="loginForm">
+        {% csrf_token %}
+
+        <input
+          type="email"
+          name="email"
+          id="email"
+          placeholder="Email"
+          required
+        />
+
+        <input
+          type="password"
+          name="password"
+          id="password"
+          placeholder="Password"
+          required
+        />
+
+        <button type="submit">Login</button>
+      </form>
+    </div>
+
+    <script>
+      document
+        .getElementById("loginForm")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+
+          const email = document.getElementById("email").value;
+          const password = document.getElementById("password").value;
+          const errorBox = document.getElementById("errorBox");
+
+          errorBox.innerText = "";
+
+          try {
+            const response = await fetch("/login/", {
+              method: "POST",
+
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+
+                "X-CSRFToken": getCSRFToken(),
+              },
+
+              body: new URLSearchParams({
+                email: email,
+
+                password: password,
+              }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+              alert("Login successful");
+
+              window.location.href = "/";
+            } else {
+              errorBox.innerText = data.error;
+            }
+          } catch (err) {
+            errorBox.innerText = "Server error";
+
+            console.log(err);
+          }
+        });
+
+      function getCSRFToken() {
+        let cookieValue = null;
+
+        const cookies = document.cookie.split(";");
+
+        for (let cookie of cookies) {
+          cookie = cookie.trim();
+
+          if (cookie.startsWith("csrftoken=")) {
+            cookieValue = cookie.substring("csrftoken=".length);
+          }
+        }
+
+        return cookieValue;
+      }
+    </script>
+  </body>
+</html>

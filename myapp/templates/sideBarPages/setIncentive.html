@@ -1,0 +1,533 @@
+{% include 'header.html' %}
+{% include 'navbar.html' %}
+{% include 'sidebar.html' %}
+{% load static %}
+
+<link rel="stylesheet" href="{% static '../static/dist/css/myCustome.css' %}">
+
+<div class="content-wrapper" style="background-image:url('{% static '../static/dist/img/SriKrishnabackgroundimage3.jpg' %}');background-size:cover;">
+
+  <!-- Header -->
+  <div class="content-header mb-3">
+    <div class="container-fluid bg-white p-2 rounded" style="width:99%">
+      <div class="row mb-2">
+        <div class="col-sm-6"><h1 class="m-0">Order Incentives</h1></div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="/" class="text-danger">Home</a></li>
+            <li class="breadcrumb-item"><a href="/" class="text-danger">Dashboard</a></li>
+            <li class="breadcrumb-item active">Order Incentives</li>
+          </ol>
+        </div>
+      </div><hr>
+    </div>
+  </div>
+
+  <div class="row ml-2 mr-2 mt-2">
+
+    <!-- ── LEFT: Add / Edit Form ─────────────────────────────────────────── -->
+    <div class="col-lg-4 col-12 mb-4">
+      <div class="card shadow-sm vr-card">
+
+        <div class="card-header vr-card-header">
+          <div class="d-flex align-items-center">
+            <div class="vr-header-icon">
+              <i class="fas fa-gift text-white" style="font-size:15px;"></i>
+            </div>
+            <div>
+              <p class="vr-header-title mb-0" id="formTitle">Add Incentive Rule</p>
+              <small class="vr-header-subtitle">Set order threshold &amp; reward amount</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body" style="padding:20px;">
+
+          <input type="hidden" id="editId">
+
+          <!-- Orders threshold -->
+          <div class="si-form-group">
+            <label class="si-label">
+              <i class="fas fa-shopping-cart si-label-icon"></i>
+              More Than (Orders)
+            </label>
+            <div class="si-input-wrapper">
+              <input type="number" id="moreOrders" class="form-control si-input" placeholder="e.g. 10" min="1">
+              <span class="si-input-suffix">orders</span>
+            </div>
+            <small class="si-hint">Incentive applies when delivery count exceeds this number</small>
+          </div>
+
+          <!-- Incentive amount -->
+          <div class="si-form-group">
+            <label class="si-label">
+              <i class="fas fa-rupee-sign si-label-icon"></i>
+              Incentive Amount (₹)
+            </label>
+            <div class="si-input-wrapper">
+              <span class="si-input-prefix">₹</span>
+              <input type="number" id="incentiveAmt" class="form-control si-input si-input-prefixed" placeholder="e.g. 150.00" min="0" step="0.01">
+            </div>
+            <small class="si-hint">Bonus paid to the delivery partner</small>
+          </div>
+
+          <!-- Buttons -->
+          <div class="d-flex" style="gap:8px; margin-top:20px;">
+            <button class="btn si-btn-save flex-fill" id="saveBtn" onclick="saveIncentive()">
+              <i class="fas fa-save mr-1"></i><span id="saveBtnText">Save Rule</span>
+            </button>
+            <button class="btn si-btn-cancel" id="cancelBtn" onclick="resetForm()" style="display:none;">
+              <i class="fas fa-times mr-1"></i>Cancel
+            </button>
+          </div>
+
+          <!-- Inline feedback -->
+          <div id="formAlert" style="display:none; margin-top:12px;"></div>
+
+        </div>
+      </div>
+
+      <!-- Info card -->
+      <div class="card shadow-sm mt-3" style="border-radius:10px; border-left:4px solid #A82323;">
+        <div class="card-body py-3 px-3">
+          <p style="font-size:12px; font-weight:700; color:#A82323; margin-bottom:6px;">
+            <i class="fas fa-info-circle mr-1"></i>How it works
+          </p>
+          <p style="font-size:12px; color:#666; margin:0; line-height:1.7;">
+            When a delivery partner completes <strong>more than</strong> the threshold orders,
+            they automatically receive the configured bonus amount.<br>
+            Multiple rules can co-exist; the highest matching rule is applied.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── RIGHT: Incentive Rules Table ──────────────────────────────────── -->
+    <div class="col-lg-8 col-12 mb-4">
+      <div class="card shadow-sm vr-card">
+
+        <div class="card-header vr-card-header">
+          <div class="d-flex flex-wrap justify-content-between align-items-center" style="gap:10px;">
+            <div class="d-flex align-items-center">
+              <div class="vr-header-icon">
+                <i class="fas fa-list-ol text-white" style="font-size:15px;"></i>
+              </div>
+              <div>
+                <p class="vr-header-title mb-0">Active Incentive Rules</p>
+                <small class="vr-header-subtitle">All configured order-based incentives</small>
+              </div>
+            </div>
+            <div class="vr-search-wrapper">
+              <i class="fas fa-search"></i>
+              <input type="text" id="tableSearch" placeholder="Search..." class="form-control form-control-sm vr-search-input" oninput="renderTable()">
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table mb-0 vr-table" id="incentiveTable">
+              <thead>
+                <tr>
+                  <th style="width:40px;">#</th>
+                  <th>Order Threshold</th>
+                  <th>Incentive Amount</th>
+                  <th>Created On</th>
+                  <th style="width:110px; text-align:center;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="incentiveTbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="vr-card-footer">
+          <small class="vr-footer-count">
+            <i class="fas fa-table mr-1" style="color:#A82323;"></i>
+            Showing <strong id="footerCount">0</strong> rule(s)
+          </small>
+          <small class="vr-footer-time">
+            <i class="fas fa-sync-alt mr-1"></i>
+            Last updated: <span id="lastUpdated"></span>
+          </small>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── Delete Confirm Modal ──────────────────────────────────────────────── -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:400px;" role="document">
+    <div class="modal-content" style="border-radius:12px; overflow:hidden;">
+      <div class="modal-header" style="background:#A82323; padding:14px 20px;">
+        <h6 class="modal-title text-white mb-0"><i class="fas fa-exclamation-triangle mr-2"></i>Confirm Delete</h6>
+        <button type="button" class="close text-white" data-dismiss="modal" style="opacity:1;"><span>&times;</span></button>
+      </div>
+      <div class="modal-body text-center" style="padding:24px;">
+        <i class="fas fa-trash-alt" style="font-size:38px; color:#A82323; margin-bottom:12px; display:block;"></i>
+        <p style="font-size:14px; color:#333; font-weight:600; margin-bottom:4px;">Delete this incentive rule?</p>
+        <p style="font-size:12px; color:#888; margin:0;" id="deleteModalDesc">This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer" style="justify-content:center; gap:10px; border-top:1px solid #f0f0f0; padding:14px;">
+        <button class="btn btn-sm btn-secondary" data-dismiss="modal" style="border-radius:6px; font-size:12px; min-width:80px;">Cancel</button>
+        <button class="btn btn-sm" id="confirmDeleteBtn" style="background:#A82323; color:#fff; border-radius:6px; font-size:12px; min-width:80px;">
+          <i class="fas fa-trash-alt mr-1"></i>Delete
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Styles ─────────────────────────────────────────────────────────────── -->
+<style>
+  /* Form Group */
+  .si-form-group { margin-bottom: 18px; }
+
+  .si-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #444;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: block;
+    margin-bottom: 6px;
+  }
+  .si-label-icon {
+    color: #A82323;
+    margin-right: 5px;
+    font-size: 11px;
+  }
+
+  /* Input wrapper with prefix/suffix */
+  .si-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .si-input {
+    border-radius: 8px;
+    border: 1.5px solid #e0e0e0;
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    height: 40px;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+  .si-input:focus {
+    border-color: #A82323;
+    box-shadow: 0 0 0 3px rgba(168,35,35,0.08);
+    outline: none;
+  }
+  .si-input-prefix {
+    position: absolute;
+    left: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #A82323;
+    pointer-events: none;
+    z-index: 2;
+  }
+  .si-input-prefixed { padding-left: 26px !important; }
+  .si-input-suffix {
+    position: absolute;
+    right: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #999;
+    pointer-events: none;
+  }
+  .si-hint {
+    font-size: 11px;
+    color: #aaa;
+    margin-top: 4px;
+    display: block;
+  }
+
+  /* Buttons */
+  .si-btn-save {
+    background: #A82323;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    height: 40px;
+    transition: background 0.2s;
+  }
+  .si-btn-save:hover { background: #8e1c1c; color: #fff; }
+  .si-btn-cancel {
+    background: #f1f1f1;
+    color: #555;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    height: 40px;
+    min-width: 90px;
+    transition: background 0.2s;
+  }
+  .si-btn-cancel:hover { background: #e0e0e0; }
+
+  /* Table: order badge */
+  .si-order-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    color: #856404;
+    border-radius: 20px;
+    padding: 3px 12px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  /* Table: amount badge */
+  .si-amount-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #d4edda;
+    border: 1px solid #28a745;
+    color: #155724;
+    border-radius: 20px;
+    padding: 3px 12px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  /* Edit mode highlight */
+  .si-input.editing { border-color: #f6c23e; background: #fffdf0; }
+</style>
+
+<!-- ── Scripts ────────────────────────────────────────────────────────────── -->
+<script>
+  let incentives   = [];
+  let deleteTarget = null;
+
+  // ── Helpers ────────────────────────────────────────────────────────────
+  function formatDate(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    return `${String(d.getDate()).padStart(2,'0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  }
+  function formatTime(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    let h = d.getHours(), m = d.getMinutes(), ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')} ${ampm}`;
+  }
+  function showAlert(msg, type = 'success') {
+    const el = document.getElementById('formAlert');
+    el.innerHTML = `<div class="alert alert-${type} py-2 px-3" style="font-size:12px; border-radius:8px;">${msg}</div>`;
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 3000);
+  }
+  function getCookie(name) {
+    let c = null;
+    document.cookie.split(';').forEach(s => {
+      const [k, v] = s.trim().split('=');
+      if (k === name) c = decodeURIComponent(v);
+    });
+    return c;
+  }
+  function setLastUpdated() {
+    const now = new Date();
+    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    let h = now.getHours(), m = now.getMinutes(), ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    document.getElementById('lastUpdated').textContent =
+      `${String(now.getDate()).padStart(2,'0')} ${months[now.getMonth()]} ${now.getFullYear()}, ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')} ${ampm}`;
+  }
+
+  // ── Render Table ───────────────────────────────────────────────────────
+  function renderTable() {
+    const search = document.getElementById('tableSearch').value.toLowerCase();
+    const tbody  = document.getElementById('incentiveTbody');
+    const filtered = incentives.filter(inc =>
+      !search ||
+      String(inc.more_than_order).includes(search) ||
+      String(inc.incentive_amount).includes(search)
+    );
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5">
+        <div class="vr-empty-state">
+          <i class="fas fa-gift"></i>
+          <p class="vr-empty-title">No Incentive Rules Found</p>
+          <small class="vr-empty-subtitle">Add your first rule using the form on the left.</small>
+        </div></td></tr>`;
+      document.getElementById('footerCount').textContent = 0;
+      return;
+    }
+
+    tbody.innerHTML = filtered.map((inc, i) => `
+      <tr>
+        <td><span class="vr-cell-muted font-weight-bold">${i + 1}</span></td>
+        <td>
+          <span class="si-order-badge">
+            <i class="fas fa-shopping-cart" style="font-size:10px;"></i>
+            &gt; ${inc.more_than_order} orders
+          </span>
+        </td>
+        <td>
+          <span class="si-amount-badge">
+            <i class="fas fa-rupee-sign" style="font-size:10px;"></i>
+            ₹${parseFloat(inc.incentive_amount).toFixed(2)}
+          </span>
+        </td>
+        <td>
+          <div class="vr-cell-text-sm">
+            <i class="fas fa-calendar-alt mr-1" style="color:#A82323;font-size:10px;"></i>${formatDate(inc.created_at)}
+          </div>
+          <small class="vr-cell-time">${formatTime(inc.created_at)}</small>
+        </td>
+        <td>
+          <div class="d-flex align-items-center justify-content-center" style="gap:5px;">
+            <a href="#" class="vr-btn vr-btn-view" onclick="editIncentive(${inc.id}); return false;" title="Edit">
+              <i class="fas fa-edit"></i>
+            </a>
+            <a href="#" class="vr-btn vr-btn-reject" onclick="askDelete(${inc.id}, ${inc.more_than_order}); return false;" title="Delete">
+              <i class="fas fa-trash-alt"></i>
+            </a>
+          </div>
+        </td>
+      </tr>`).join('');
+
+    document.getElementById('footerCount').textContent = filtered.length;
+  }
+
+  // ── Load from API ──────────────────────────────────────────────────────
+  function loadIncentives() {
+    fetch("{% url 'setOrderIncentiveView' %}", {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.status) {
+        incentives = data.incentives;
+        renderTable();
+        setLastUpdated();
+      }
+    })
+    .catch(err => console.error(err));
+  }
+
+  // ── Save (Create / Update) ─────────────────────────────────────────────
+  function saveIncentive() {
+    const editId = document.getElementById('editId').value;
+    const orders = document.getElementById('moreOrders').value.trim();
+    const amount = document.getElementById('incentiveAmt').value.trim();
+
+    if (!orders || !amount) {
+      showAlert('<i class="fas fa-exclamation-circle mr-1"></i>Both fields are required.', 'danger');
+      return;
+    }
+    if (parseInt(orders) < 1) {
+      showAlert('<i class="fas fa-exclamation-circle mr-1"></i>Orders must be at least 1.', 'danger');
+      return;
+    }
+    if (parseFloat(amount) < 0) {
+      showAlert('<i class="fas fa-exclamation-circle mr-1"></i>Amount cannot be negative.', 'danger');
+      return;
+    }
+
+    const payload = { more_than_order: parseInt(orders), incentive_amount: parseFloat(amount) };
+    if (editId) payload.id = parseInt(editId);
+
+    fetch("{% url 'setOrderIncentiveSave' %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken'),
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.status) {
+        showAlert(`<i class="fas fa-check-circle mr-1"></i>${data.message}`, 'success');
+        resetForm();
+        loadIncentives();
+      } else {
+        showAlert(`<i class="fas fa-times-circle mr-1"></i>${data.message}`, 'danger');
+      }
+    })
+    .catch(() => showAlert('Network error.', 'danger'));
+  }
+
+  // ── Edit: populate form ────────────────────────────────────────────────
+  function editIncentive(id) {
+    const inc = incentives.find(x => x.id === id);
+    if (!inc) return;
+    document.getElementById('editId').value       = inc.id;
+    document.getElementById('moreOrders').value   = inc.more_than_order;
+    document.getElementById('incentiveAmt').value = parseFloat(inc.incentive_amount).toFixed(2);
+    document.getElementById('formTitle').textContent   = 'Edit Incentive Rule';
+    document.getElementById('saveBtnText').textContent = 'Update Rule';
+    document.getElementById('cancelBtn').style.display = 'inline-block';
+    document.getElementById('moreOrders').classList.add('editing');
+    document.getElementById('incentiveAmt').classList.add('editing');
+    document.getElementById('moreOrders').focus();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── Reset Form ────────────────────────────────────────────────────────
+  function resetForm() {
+    document.getElementById('editId').value       = '';
+    document.getElementById('moreOrders').value   = '';
+    document.getElementById('incentiveAmt').value = '';
+    document.getElementById('formTitle').textContent   = 'Add Incentive Rule';
+    document.getElementById('saveBtnText').textContent = 'Save Rule';
+    document.getElementById('cancelBtn').style.display = 'none';
+    document.getElementById('moreOrders').classList.remove('editing');
+    document.getElementById('incentiveAmt').classList.remove('editing');
+    document.getElementById('formAlert').style.display = 'none';
+  }
+
+  // ── Delete ────────────────────────────────────────────────────────────
+  function askDelete(id, orders) {
+    deleteTarget = id;
+    document.getElementById('deleteModalDesc').textContent =
+      `Rule "more than ${orders} orders" will be permanently removed.`;
+    $('#deleteModal').modal('show');
+  }
+
+  document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
+    if (!deleteTarget) return;
+    fetch("{% url 'setOrderIncentiveDelete' %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken'),
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify({ id: deleteTarget })
+    })
+    .then(r => r.json())
+    .then(data => {
+      $('#deleteModal').modal('hide');
+      if (data.status) {
+        incentives = incentives.filter(x => x.id !== deleteTarget);
+        renderTable();
+        setLastUpdated();
+      } else {
+        alert(data.message || 'Delete failed.');
+      }
+      deleteTarget = null;
+    })
+    .catch(() => { $('#deleteModal').modal('hide'); alert('Network error.'); });
+  });
+
+  // ── Init ──────────────────────────────────────────────────────────────
+  loadIncentives();
+</script>
+
+{% include 'footer.html' %}
+{% include 'footer_link.html' %}

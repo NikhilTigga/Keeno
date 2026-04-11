@@ -1,0 +1,24 @@
+
+<div class="msg-sec">
+   {% if messages %}
+   {% for msg in messages %}
+   {% if msg.tags == "error" %}
+   <div class="alert alert-danger bg-danger text-white msg-popup" role="alert">
+  
+      <i class="fas fa-exclamation-triangle"></i>&nbsp;&nbsp;{{msg.message}}
+      <button type="button" class="close text-white" data-dismiss="alert" aria-label="Close">
+      <span aria-hidden="true" class="text-white">&times;</span></button>
+   </div>
+   {% else %}
+   <div class="alert alert-warning bg-warning text-white msg-popup" role="alert">
+ 
+      <i class="fas fa-check-circle"></i>&nbsp;&nbsp;{{msg.message}}
+       <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+         <span aria-hidden="true" class="text-dark">&times;</span></button>
+   </div>
+   {% endif %}
+   {% endfor %}
+   {% endif %}
+</div>
+
+

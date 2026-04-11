@@ -1,0 +1,460 @@
+{% include 'header.html' %}
+{% include 'navbar.html' %}
+{% include 'sidebar.html' %}
+{% load static %}
+
+<link rel="stylesheet" href="{% static '../static/dist/css/myCustome.css' %}">
+
+{% comment %} <div class="content-wrapper p-3"> {% endcomment %}
+ <div class="content-wrapper "  style="background-image:url('{% static '../static/dist/img/SriKrishnabackgroundimage3.jpg'   %}');background-size:cover;">
+  <!-- Header -->
+  <div class="content-header mb-3">
+    <div class="container-fluid bg-white p-2 rounded" style="width:99%">
+      <div class="row mb-2">
+        <div class="col-sm-6"><h1 class="m-0">Verify Restaurants</h1></div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="/" class="text-danger">Home</a></li>
+            <li class="breadcrumb-item"><a href="/" class="text-danger">Dashboard</a></li>
+            <li class="breadcrumb-item active">Verify Restaurants</li>
+          </ol>
+        </div>
+      </div><hr>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="row ml-2 mr-2 mt-2" id="summaryCards"></div>
+
+  <!-- Restaurant Table -->
+  <div class="row ml-2 mr-2">
+    <div class="col-12">
+      <div class="card shadow-sm vr-card">
+        <!-- Card Header -->
+        <div class="card-header vr-card-header">
+          <div class="d-flex flex-wrap justify-content-between align-items-center" style="gap:10px;">
+            <div class="d-flex align-items-center">
+              <div class="vr-header-icon">
+                <i class="fas fa-clipboard-check text-white" style="font-size:15px;"></i>
+              </div>
+              <div>
+                <p class="vr-header-title mb-0">Restaurant Verification Requests</p>
+                <small class="vr-header-subtitle">Review and take action on pending registrations</small>
+              </div>
+            </div>
+            <div class="d-flex align-items-center flex-wrap" style="gap:8px;">
+              <div class="vr-search-wrapper">
+                <i class="fas fa-search"></i>
+                <input type="text" id="tableSearch" placeholder="Search..." class="form-control form-control-sm vr-search-input">
+              </div>
+              <div class="btn-group" role="group">
+                <a href="#" class="vr-btn-filter vr-filter-btn active-all" data-filter="all"><i class="fas fa-list mr-1"></i>All</a>
+                <a href="#" class="vr-btn-filter vr-filter-btn " data-filter="pending"><i class="fas fa-hourglass-half mr-1"></i>Pending</a>
+                <a href="#" class="vr-btn-filter vr-filter-btn  " data-filter="approved"><i class="fas fa-check mr-1"></i>Approved</a>
+                <a href="#" class="vr-btn-filter vr-filter-btn " data-filter="rejected"><i class="fas fa-times mr-1"></i>Rejected</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table — only 6 visible columns now, no x-scroll -->
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table mb-0 vr-table" id="restaurantTable">
+              <thead>
+                <tr>
+                  <th style="width:40px;">#</th>
+                  <th>Restaurant</th>
+                  <th>Owner</th>
+                  <th>Phone</th>
+                  <th>Status</th>
+                  <th>Registered On</th>
+                  <th style="width:130px; text-align:center;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="restaurantTbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="vr-card-footer">
+          <small class="vr-footer-count">
+            <i class="fas fa-table mr-1" style="color:#A82323;"></i>
+            Showing <strong id="footerCount">0</strong> restaurant(s)
+          </small>
+          <small class="vr-footer-time">
+            <i class="fas fa-sync-alt mr-1"></i>
+            Last updated: <span id="lastUpdated"></span>
+          </small>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Modals Container ──────────────────────────────────────────────────────── -->
+<div id="modalsContainer"></div>
+
+<!-- ─── View Details Modal (single reusable modal) ───────────────────────────── -->
+<div class="modal fade" id="detailModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-content vr-modal-content">
+
+      <div class="modal-header vr-modal-header">
+        <div class="d-flex align-items-center">
+          <div class="vr-avatar-sm" id="detailAvatar">R</div>
+          <div>
+            <p class="vr-modal-title mb-0" id="detailName">Restaurant Name</p>
+            <small class="vr-modal-subtitle" id="detailId">ID #—</small>
+          </div>
+        </div>
+        <button type="button" class="close vr-modal-close" data-dismiss="modal"><span>&times;</span></button>
+      </div>
+
+      <div class="modal-body" style="background:#f9f9f9; padding:20px;">
+
+        <!-- Info Grid -->
+        <div class="row" id="detailGrid"></div>
+
+        <!-- Images -->
+        <div id="detailImagesSection" style="display:none; margin-top:16px;">
+          <p style="font-size:12px; font-weight:700; color:#A82323; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:10px;">
+            <i class="fas fa-images mr-1"></i>Restaurant Photos
+          </p>
+          <div class="row" id="detailImages"></div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer vr-modal-footer" style="justify-content:space-between; align-items:center;">
+        <span id="detailStatusBadge"></span>
+        <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal" style="border-radius:6px;font-size:12px;">
+          <i class="fas fa-times mr-1"></i>Close
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<style>
+  /* ── Detail Modal Info Card ── */
+  .detail-info-card {
+    background: #fff;
+    border: 1px solid #f0f0f0;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+  }
+  .detail-info-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #aaa;
+    margin-bottom: 3px;
+  }
+  .detail-info-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    word-break: break-word;
+  }
+  .detail-info-icon {
+    font-size: 11px;
+    margin-right: 5px;
+  }
+  
+</style>
+
+<script>
+  let restaurants = [];
+
+  // ─── Helpers ──────────────────────────────────────────────────────────────────
+  function formatDate(iso) {
+    const d = new Date(iso);
+    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    return `${String(d.getDate()).padStart(2,'0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  }
+  function formatTime(iso) {
+    const d = new Date(iso);
+    let h = d.getHours(), m = d.getMinutes(), ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')} ${ampm}`;
+  }
+  function badgeHTML(status) {
+    if (status === 'approved') return `<span class="vr-badge vr-badge-approved"><i class="fas fa-check-circle" style="font-size:10px;"></i> Approved</span>`;
+    if (status === 'rejected') return `<span class="vr-badge vr-badge-rejected"><i class="fas fa-times-circle" style="font-size:10px;"></i> Rejected</span>`;
+    return `<span class="vr-badge vr-badge-pending"><i class="fas fa-hourglass-half" style="font-size:10px;"></i> Pending</span>`;
+  }
+  function actionHTML(r) {
+    const viewBtn = `<a href="#" class="vr-btn vr-btn-view view-detail-btn" data-id="${r.id}" title="View Details"><i class="fas fa-eye"></i></a>`;
+    let actionBtn = '';
+    if (r.approveStatus === 'pending') {
+      actionBtn = `
+        <a href="#" class="vr-btn vr-btn-approve action-btn" data-id="${r.id}" data-action="approve" onclick="return confirm('Approve this restaurant?')" title="Approve"><i class="fas fa-check"></i></a>
+        <a href="#" class="vr-btn vr-btn-reject action-btn"  data-id="${r.id}" data-action="reject"  onclick="return confirm('Reject this restaurant?')"  title="Reject"><i class="fas fa-times"></i></a>`;
+    } else if (r.approveStatus === 'approved') {
+      actionBtn = `<a href="#" class="vr-btn vr-btn-revoke action-btn" data-id="${r.id}" data-action="reject" onclick="return confirm('Revoke approval?')" title="Revoke"><i class="fas fa-ban"></i></a>`;
+    } else {
+      actionBtn = `<a href="#" class="vr-btn vr-btn-reapprove action-btn" data-id="${r.id}" data-action="approve" onclick="return confirm('Re-approve?')" title="Re-approve"><i class="fas fa-redo"></i></a>`;
+    }
+    return `<div class="d-flex align-items-center justify-content-center" style="gap:5px;">${viewBtn}${actionBtn}</div>`;
+  }
+
+  // ─── Open Detail Modal ────────────────────────────────────────────────────────
+  function openDetailModal(id) {
+    const r = restaurants.find(x => x.id === id);
+    if (!r) return;
+
+    document.getElementById('detailAvatar').textContent = r.restaurantname[0].toUpperCase();
+    document.getElementById('detailName').textContent   = r.restaurantname;
+    document.getElementById('detailId').textContent     = `ID #${r.id}`;
+    document.getElementById('detailStatusBadge').innerHTML = badgeHTML(r.approveStatus);
+
+    const fields = [
+      { icon: 'fa-user-tie',      color: '#A82323', label: 'Owner',          value: r.ownername },
+      { icon: 'fa-phone-alt',     color: '#1cc88a', label: 'Phone',          value: r.phone },
+      { icon: 'fa-envelope',      color: '#4e73df', label: 'Email',          value: r.email },
+      { icon: 'fa-map-marker-alt',color: '#e74a3b', label: 'Address',        value: r.adderess },
+      { icon: 'fa-user-shield',   color: '#A82323', label: 'Approved By',    value: r.approvedby || '—' },
+      { icon: 'fa-calendar-alt',  color: '#A82323', label: 'Registered On',  value: `${formatDate(r.created_at)} at ${formatTime(r.created_at)}` },
+    ];
+
+    document.getElementById('detailGrid').innerHTML = fields.map(f => `
+      <div class="col-md-6 col-12">
+        <div class="detail-info-card">
+          <div class="detail-info-label">${f.label}</div>
+          <div class="detail-info-value">
+            <i class="fas ${f.icon} detail-info-icon" style="color:${f.color};"></i>${f.value}
+          </div>
+        </div>
+      </div>`).join('');
+
+    // Images
+    if (r.images && r.images.length > 0) {
+      document.getElementById('detailImagesSection').style.display = 'block';
+      document.getElementById('detailImages').innerHTML = r.images.map(img => `
+        <div class="col-md-4 col-6 mb-3">
+          <div class="vr-img-card"><img src="${img}" alt="Restaurant Image"></div>
+        </div>`).join('');
+    } else {
+      document.getElementById('detailImagesSection').style.display = 'none';
+    }
+
+    $('#detailModal').modal('show');
+  }
+
+  // ─── Render Table ─────────────────────────────────────────────────────────────
+  let currentFilter = 'all';
+  function renderTable(filter = 'all', search = '') {
+    currentFilter = filter;
+    const tbody = document.getElementById('restaurantTbody');
+    const filtered = restaurants.filter(r => {
+      const matchFilter = filter === 'all' || r.approveStatus === filter;
+      const matchSearch = !search || JSON.stringify(r).toLowerCase().includes(search.toLowerCase());
+      return matchFilter && matchSearch;
+    });
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7">
+        <div class="vr-empty-state">
+          <i class="fas fa-store-slash"></i>
+          <p class="vr-empty-title">No Restaurants Found</p>
+          <small class="vr-empty-subtitle">There are no restaurants matching the selected filter.</small>
+        </div></td></tr>`;
+      document.getElementById('footerCount').textContent = 0;
+      return;
+    }
+
+    tbody.innerHTML = filtered.map((r, i) => `
+      <tr data-status="${r.approveStatus}">
+        <td><span class="vr-cell-muted font-weight-bold">${i + 1}</span></td>
+        <td>
+          <div class="d-flex align-items-center">
+            <div class="vr-avatar">${r.restaurantname[0].toUpperCase()}</div>
+            <div>
+              <div class="vr-rest-name">${r.restaurantname}</div>
+              <small class="vr-rest-id">ID #${r.id}</small>
+            </div>
+          </div>
+        </td>
+        <td><span class="vr-cell-text"><i class="fas fa-user-tie mr-1" style="color:#A82323;font-size:11px;"></i>${r.ownername}</span></td>
+        <td><span class="vr-cell-text-sm"><i class="fas fa-phone-alt mr-1" style="color:#1cc88a;font-size:10px;"></i>${r.phone}</span></td>
+        <td>${badgeHTML(r.approveStatus)}</td>
+        <td>
+          <div class="vr-cell-text-sm"><i class="fas fa-calendar-alt mr-1" style="color:#A82323;font-size:10px;"></i>${formatDate(r.created_at)}</div>
+          <small class="vr-cell-time">${formatTime(r.created_at)}</small>
+        </td>
+        <td>${actionHTML(r)}</td>
+      </tr>`).join('');
+
+    document.getElementById('footerCount').textContent = filtered.length;
+  }
+
+  // ─── Render Summary Cards ─────────────────────────────────────────────────────
+  function renderSummaryCards() {
+    const pending  = restaurants.filter(r => r.approveStatus === 'pending').length;
+    const approved = restaurants.filter(r => r.approveStatus === 'approved').length;
+    const rejected = restaurants.filter(r => r.approveStatus === 'rejected').length;
+    const total    = restaurants.length;
+    document.getElementById('summaryCards').innerHTML = `
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card_ border-left-warning shadow h-100 py-2 bg-white">
+          <div class="card-body">
+            <div class="row no-gutters align-items-center">
+              <div class="col mr-2">
+                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Pending</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">${pending}</div>
+              </div>
+              <div class="col-auto"><i class="fas fa-hourglass-half fa-2x text-warning"></i></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card_ border-left-success shadow h-100 py-2 bg-white">
+          <div class="card-body">
+            <div class="row no-gutters align-items-center">
+              <div class="col mr-2">
+                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Approved</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">${approved}</div>
+              </div>
+              <div class="col-auto"><i class="fas fa-check-circle fa-2x text-success"></i></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card_ shadow h-100 py-2 bg-white" style="border-left:5px solid #dc3545;border-radius:8px;">
+          <div class="card-body">
+            <div class="row no-gutters align-items-center">
+              <div class="col mr-2">
+                <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Rejected</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">${rejected}</div>
+              </div>
+              <div class="col-auto"><i class="fas fa-times-circle fa-2x text-danger"></i></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card_ border-left-primary shadow h-100 py-2 bg-white">
+          <div class="card-body">
+            <div class="row no-gutters align-items-center">
+              <div class="col mr-2">
+                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Restaurants</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">${total}</div>
+              </div>
+              <div class="col-auto"><i class="fas fa-utensils fa-2x text-primary"></i></div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  // ─── Event Delegation ─────────────────────────────────────────────────────────
+  document.addEventListener('click', function(e) {
+    // View Details
+    const viewBtn = e.target.closest('.view-detail-btn');
+    if (viewBtn) {
+      e.preventDefault();
+      openDetailModal(parseInt(viewBtn.dataset.id));
+      return;
+    }
+    // Approve / Reject
+    const actionBtn = e.target.closest('.action-btn');
+    if (actionBtn) {
+      const id     = parseInt(actionBtn.dataset.id);
+      const action = actionBtn.dataset.action;
+
+      fetch("{% url 'update_restaurant_status' %}",{
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+        },
+        body:JSON.stringify({
+          restaurant_id:id,
+          action:action
+        })
+      })
+
+      .then(res=> res.json())
+      .then(data =>{
+
+        if(data.status){
+
+          const rest   = restaurants.find(r => r.id === id);
+          if (!rest) return;
+
+          rest.approveStatus = action === 'approve' ? 'approved' : 'rejected';
+
+          if (action === 'approve')
+          rest.approvedby = 'Admin (You)';
+          
+          renderSummaryCards();
+          renderTable(currentFilter,document.getElementById('tableSearch').value)
+
+        }else{
+          alert(data.message)
+        }
+        renderSummaryCard();
+        renderTable(curren)
+
+      })
+      
+    }
+  });
+
+  // ─── Filter Buttons ───────────────────────────────────────────────────────────
+  document.querySelectorAll('.vr-filter-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      document.querySelectorAll('.vr-filter-btn').forEach(b => b.className = 'vr-btn-filter vr-filter-btn');
+      this.classList.add(`active-${this.dataset.filter}`);
+      renderTable(this.dataset.filter, document.getElementById('tableSearch').value);
+    });
+  });
+
+  // ─── Search ───────────────────────────────────────────────────────────────────
+  document.getElementById('tableSearch').addEventListener('keyup', function() {
+    renderTable(currentFilter, this.value);
+  });
+
+  // ─── Last Updated ─────────────────────────────────────────────────────────────
+  function setLastUpdated() {
+    const now = new Date();
+    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    let h = now.getHours(), m = now.getMinutes(), ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    document.getElementById('lastUpdated').textContent =
+      `${String(now.getDate()).padStart(2,'0')} ${months[now.getMonth()]} ${now.getFullYear()}, ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')} ${ampm}`;
+  }
+
+  // ─── Load from API ────────────────────────────────────────────────────────────
+  function loadRestaurants() {
+    fetch("{% url 'verifyCreatorView' %}", {
+      headers: { "X-Requested-With": "XMLHttpRequest" }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status) {
+        restaurants = data.restaurants;
+        renderSummaryCards();
+        renderTable('all');
+        setLastUpdated();
+      } else {
+        console.error("Failed to load restaurants");
+      }
+    })
+    .catch(err => console.error("Error:", err));
+  }
+
+  loadRestaurants();
+</script>
+
+
+{% include 'footer.html' %}
+{% include 'footer_link.html' %}

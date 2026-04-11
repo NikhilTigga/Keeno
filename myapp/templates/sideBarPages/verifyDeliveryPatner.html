@@ -1,0 +1,590 @@
+{% include 'header.html' %}
+{% include 'navbar.html' %}
+{% include 'sidebar.html' %}
+{% load static %}
+
+<link rel="stylesheet" href="{% static '../static/dist/css/myCustome.css' %}">
+
+<div class="content-wrapper" style="background-image:url('{% static '../static/dist/img/SriKrishnabackgroundimage3.jpg' %}');background-size:cover;">
+
+  <!-- Header -->
+  <div class="content-header mb-3">
+    <div class="container-fluid bg-white p-2 rounded" style="width:99%">
+      <div class="row mb-2">
+        <div class="col-sm-6"><h1 class="m-0">Verify Delivery Partners</h1></div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="/" class="text-danger">Home</a></li>
+            <li class="breadcrumb-item"><a href="/" class="text-danger">Dashboard</a></li>
+            <li class="breadcrumb-item active">Verify Delivery Partners</li>
+          </ol>
+        </div>
+      </div><hr>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="row ml-2 mr-2 mt-2" id="summaryCards"></div>
+
+  <!-- Delivery Partner Table -->
+  <div class="row ml-2 mr-2">
+    <div class="col-12">
+      <div class="card shadow-sm vr-card">
+
+        <!-- Card Header -->
+        <div class="card-header vr-card-header">
+          <div class="d-flex flex-wrap justify-content-between align-items-center" style="gap:10px;">
+            <div class="d-flex align-items-center">
+              <div class="vr-header-icon">
+                <i class="fas fa-motorcycle text-white" style="font-size:15px;"></i>
+              </div>
+              <div>
+                <p class="vr-header-title mb-0">Delivery Partner Verification Requests</p>
+                <small class="vr-header-subtitle">Review and take action on pending registrations</small>
+              </div>
+            </div>
+            <div class="d-flex align-items-center flex-wrap" style="gap:8px;">
+              <div class="vr-search-wrapper">
+                <i class="fas fa-search"></i>
+                <input type="text" id="tableSearch" placeholder="Search..." class="form-control form-control-sm vr-search-input">
+              </div>
+              <div class="btn-group" role="group">
+                <a href="#" class="vr-btn-filter vr-filter-btn active-all" data-filter="all"><i class="fas fa-list mr-1"></i>All</a>
+                <a href="#" class="vr-btn-filter vr-filter-btn" data-filter="pending"><i class="fas fa-hourglass-half mr-1"></i>Pending</a>
+                <a href="#" class="vr-btn-filter vr-filter-btn" data-filter="approved"><i class="fas fa-check mr-1"></i>Approved</a>
+                <a href="#" class="vr-btn-filter vr-filter-btn" data-filter="rejected"><i class="fas fa-times mr-1"></i>Rejected</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table mb-0 vr-table" id="partnerTable">
+              <thead>
+                <tr>
+                  <th style="width:40px;">#</th>
+                  <th>Partner</th>
+                  <th>Phone</th>
+                  <th>Vehicle</th>
+                  <th>City</th>
+                  <th>Status</th>
+                  <th>Registered On</th>
+                  <th style="width:130px; text-align:center;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="partnerTbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="vr-card-footer">
+          <small class="vr-footer-count">
+            <i class="fas fa-table mr-1" style="color:#A82323;"></i>
+            Showing <strong id="footerCount">0</strong> partner(s)
+          </small>
+          <small class="vr-footer-time">
+            <i class="fas fa-sync-alt mr-1"></i>
+            Last updated: <span id="lastUpdated"></span>
+          </small>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── View Details Modal ───────────────────────────────────────────────────── -->
+<div class="modal fade" id="detailModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+    <div class="modal-content vr-modal-content">
+
+      <div class="modal-header vr-modal-header">
+        <div class="d-flex align-items-center">
+          <div class="vr-avatar-sm dp-avatar-sm" id="detailAvatar">D</div>
+          <div>
+            <p class="vr-modal-title mb-0" id="detailName">Partner Name</p>
+            <small class="vr-modal-subtitle" id="detailId">ID #—</small>
+          </div>
+        </div>
+        <button type="button" class="close vr-modal-close" data-dismiss="modal"><span>&times;</span></button>
+      </div>
+
+      <div class="modal-body" style="background:#f9f9f9; padding:20px;">
+
+        <!-- Tabs -->
+        <ul class="nav nav-tabs dp-tabs mb-3" id="detailTabs">
+          <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#tabPersonal"><i class="fas fa-user mr-1"></i>Personal</a></li>
+          <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tabVehicle"><i class="fas fa-motorcycle mr-1"></i>Vehicle</a></li>
+          <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tabBank"><i class="fas fa-university mr-1"></i>Bank</a></li>
+          <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tabDocuments"><i class="fas fa-file-alt mr-1"></i>Documents</a></li>
+        </ul>
+
+        <div class="tab-content" id="detailTabContent">
+
+          <!-- Personal Tab -->
+          <div class="tab-pane fade show active" id="tabPersonal">
+            <div class="row" id="gridPersonal"></div>
+          </div>
+
+          <!-- Vehicle Tab -->
+          <div class="tab-pane fade" id="tabVehicle">
+            <div class="row" id="gridVehicle"></div>
+          </div>
+
+          <!-- Bank Tab -->
+          <div class="tab-pane fade" id="tabBank">
+            <div class="row" id="gridBank"></div>
+          </div>
+
+          <!-- Documents Tab -->
+          <div class="tab-pane fade" id="tabDocuments">
+            <div class="row" id="gridDocuments"></div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="modal-footer vr-modal-footer" style="justify-content:space-between; align-items:center;">
+        <span id="detailStatusBadge"></span>
+        <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal" style="border-radius:6px;font-size:12px;">
+          <i class="fas fa-times mr-1"></i>Close
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ─── Styles ───────────────────────────────────────────────────────────────── -->
+<style>
+  .detail-info-card {
+    background: #fff;
+    border: 1px solid #f0f0f0;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+  }
+  .detail-info-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #aaa;
+    margin-bottom: 3px;
+  }
+  .detail-info-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    word-break: break-word;
+  }
+  .detail-info-icon {
+    font-size: 11px;
+    margin-right: 5px;
+  }
+
+  /* Delivery Partner avatar accent */
+  .dp-avatar-sm {
+    background: linear-gradient(135deg, #A82323, #c0392b) !important;
+  }
+
+  /* Tabs */
+  .dp-tabs .nav-link {
+    font-size: 12px;
+    font-weight: 600;
+    color: #555;
+    border-radius: 6px 6px 0 0;
+    padding: 7px 14px;
+  }
+  .dp-tabs .nav-link.active {
+    color: #A82323;
+    border-color: #dee2e6 #dee2e6 #fff;
+    font-weight: 700;
+  }
+
+  /* Document image card */
+  .dp-doc-card {
+    background: #fff;
+    border: 1px solid #f0f0f0;
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 12px;
+    text-align: center;
+  }
+  .dp-doc-card .doc-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #A82323;
+    margin-bottom: 6px;
+  }
+  .dp-doc-card img {
+    width: 100%;
+    height: 130px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #eee;
+  }
+  .dp-doc-placeholder {
+    width: 100%;
+    height: 130px;
+    background: #f5f5f5;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ccc;
+    font-size: 30px;
+  }
+
+  /* Vehicle badge */
+  .vr-vehicle-badge {
+    display: inline-block;
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffc107;
+    border-radius: 20px;
+    padding: 2px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: capitalize;
+  }
+</style>
+
+<!-- ─── Scripts ──────────────────────────────────────────────────────────────── -->
+<script>
+  let partners = [];
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  function formatDate(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    return `${String(d.getDate()).padStart(2,'0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  }
+  function formatTime(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    let h = d.getHours(), m = d.getMinutes(), ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')} ${ampm}`;
+  }
+  function badgeHTML(status) {
+    if (status === 'approved') return `<span class="vr-badge vr-badge-approved"><i class="fas fa-check-circle" style="font-size:10px;"></i> Approved</span>`;
+    if (status === 'rejected') return `<span class="vr-badge vr-badge-rejected"><i class="fas fa-times-circle" style="font-size:10px;"></i> Rejected</span>`;
+    return `<span class="vr-badge vr-badge-pending"><i class="fas fa-hourglass-half" style="font-size:10px;"></i> Pending</span>`;
+  }
+  function vehicleIcon(type) {
+    const map = { bike: 'fa-motorcycle', scooter: 'fa-motorcycle', car: 'fa-car', cycle: 'fa-bicycle' };
+    return map[type] || 'fa-truck';
+  }
+  function actionHTML(p) {
+    const viewBtn = `<a href="#" class="vr-btn vr-btn-view view-detail-btn" data-id="${p.id}" title="View Details"><i class="fas fa-eye"></i></a>`;
+    let actionBtn = '';
+    if (p.approval_status === 'pending') {
+      actionBtn = `
+        <a href="#" class="vr-btn vr-btn-approve action-btn" data-id="${p.id}" data-action="approve" onclick="return confirm('Approve this delivery partner?')" title="Approve"><i class="fas fa-check"></i></a>
+        <a href="#" class="vr-btn vr-btn-reject action-btn"  data-id="${p.id}" data-action="reject"  onclick="return confirm('Reject this delivery partner?')"  title="Reject"><i class="fas fa-times"></i></a>`;
+    } else if (p.approval_status === 'approved') {
+      actionBtn = `<a href="#" class="vr-btn vr-btn-revoke action-btn" data-id="${p.id}" data-action="reject" onclick="return confirm('Revoke approval?')" title="Revoke"><i class="fas fa-ban"></i></a>`;
+    } else {
+      actionBtn = `<a href="#" class="vr-btn vr-btn-reapprove action-btn" data-id="${p.id}" data-action="approve" onclick="return confirm('Re-approve this partner?')" title="Re-approve"><i class="fas fa-redo"></i></a>`;
+    }
+    return `<div class="d-flex align-items-center justify-content-center" style="gap:5px;">${viewBtn}${actionBtn}</div>`;
+  }
+
+  // ── Detail Modal ───────────────────────────────────────────────────────────
+  function infoCard(label, value, icon, color) {
+    return `
+      <div class="col-md-6 col-12">
+        <div class="detail-info-card">
+          <div class="detail-info-label">${label}</div>
+          <div class="detail-info-value">
+            <i class="fas ${icon} detail-info-icon" style="color:${color};"></i>${value || '—'}
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function docCard(label, urls) {
+    const src = Array.isArray(urls) ? urls[0] : urls;
+    const inner = src
+      ? `<img src="${src}" alt="${label}" onclick="window.open('${src}','_blank')" style="cursor:pointer;" title="Click to open">`
+      : `<div class="dp-doc-placeholder"><i class="fas fa-file-image"></i></div>`;
+    return `
+      <div class="col-md-3 col-6">
+        <div class="dp-doc-card">
+          <div class="doc-label"><i class="fas fa-file-alt mr-1"></i>${label}</div>
+          ${inner}
+        </div>
+      </div>`;
+  }
+
+  function openDetailModal(id) {
+    const p = partners.find(x => x.id === id);
+    if (!p) return;
+
+    document.getElementById('detailAvatar').textContent = (p.full_name || 'D')[0].toUpperCase();
+    document.getElementById('detailName').textContent   = p.full_name || '—';
+    document.getElementById('detailId').textContent     = `ID: ${p.deliver_partnerid || '#' + p.id}`;
+    document.getElementById('detailStatusBadge').innerHTML = badgeHTML(p.approval_status);
+
+    // Personal
+    document.getElementById('gridPersonal').innerHTML = [
+      infoCard('Full Name',     p.full_name,     'fa-user',         '#A82323'),
+      infoCard('Email',         p.email,         'fa-envelope',     '#4e73df'),
+      infoCard('Phone',         p.phone_number,  'fa-phone-alt',    '#1cc88a'),
+      infoCard('City',          p.city,          'fa-city',         '#f6c23e'),
+      infoCard('Address',       p.address,       'fa-map-marker-alt','#e74a3b'),
+      infoCard('Referral Code', p.referral_code, 'fa-tag',          '#858796'),
+      infoCard('Work Status',   p.work_status,   'fa-toggle-on',    '#1cc88a'),
+      infoCard('Registered On', `${formatDate(p.created_at)} at ${formatTime(p.created_at)}`, 'fa-calendar-alt', '#A82323'),
+    ].join('');
+
+    // Vehicle
+    document.getElementById('gridVehicle').innerHTML = [
+      infoCard('Vehicle Type',   p.vehicle_type,   vehicleIcon(p.vehicle_type), '#f6c23e'),
+      infoCard('Vehicle Number', p.vehicle_number, 'fa-id-card',    '#4e73df'),
+      infoCard('Vehicle Model',  p.vehicle_model,  'fa-car',        '#1cc88a'),
+      infoCard('Vehicle Color',  p.vehicle_color,  'fa-palette',    '#e74a3b'),
+      infoCard('Mfg. Year',      p.manufacturing_year, 'fa-calendar','#858796'),
+    ].join('');
+
+    // Bank
+    document.getElementById('gridBank').innerHTML = [
+      infoCard('Account Holder', p.account_holder_name, 'fa-user-tie',   '#A82323'),
+      infoCard('Account Number', p.account_number,      'fa-hashtag',    '#4e73df'),
+      infoCard('Bank Name',      p.bank_name,           'fa-university', '#1cc88a'),
+      infoCard('Branch Name',    p.branch_name,         'fa-map-pin',    '#f6c23e'),
+      infoCard('IFSC Code',      p.ifsc_code,           'fa-code',       '#858796'),
+    ].join('');
+
+    // Documents
+    document.getElementById('gridDocuments').innerHTML = [
+      docCard('Profile Photo',    p.profile_image),
+      docCard('Aadhar Card',      p.aadhar_card),
+      docCard('Driving License',  p.driving_license),
+      docCard('RC Certificate',   p.vehicle_rc_certificate),
+      docCard('Vehicle Photo',    p.vehicle_image),
+    ].join('');
+
+    // Reset to first tab
+    $('#detailTabs a[href="#tabPersonal"]').tab('show');
+    $('#detailModal').modal('show');
+  }
+
+  // ── Render Table ──────────────────────────────────────────────────────────
+  let currentFilter = 'all';
+  function renderTable(filter = 'all', search = '') {
+    currentFilter = filter;
+    const tbody = document.getElementById('partnerTbody');
+    const filtered = partners.filter(p => {
+      const matchFilter = filter === 'all' || p.approval_status === filter;
+      const matchSearch = !search || JSON.stringify(p).toLowerCase().includes(search.toLowerCase());
+      return matchFilter && matchSearch;
+    });
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8">
+        <div class="vr-empty-state">
+          <i class="fas fa-motorcycle"></i>
+          <p class="vr-empty-title">No Delivery Partners Found</p>
+          <small class="vr-empty-subtitle">There are no partners matching the selected filter.</small>
+        </div></td></tr>`;
+      document.getElementById('footerCount').textContent = 0;
+      return;
+    }
+
+    tbody.innerHTML = filtered.map((p, i) => `
+      <tr data-status="${p.approval_status}">
+        <td><span class="vr-cell-muted font-weight-bold">${i + 1}</span></td>
+        <td>
+          <div class="d-flex align-items-center">
+            <div class="vr-avatar">${(p.full_name || 'D')[0].toUpperCase()}</div>
+            <div>
+              <div class="vr-rest-name">${p.full_name || '—'}</div>
+              <small class="vr-rest-id">${p.deliver_partnerid || 'ID #' + p.id}</small>
+            </div>
+          </div>
+        </td>
+        <td><span class="vr-cell-text-sm"><i class="fas fa-phone-alt mr-1" style="color:#1cc88a;font-size:10px;"></i>${p.phone_number || '—'}</span></td>
+        <td>
+          <span class="vr-vehicle-badge">
+            <i class="fas ${vehicleIcon(p.vehicle_type)} mr-1"></i>${p.vehicle_type || '—'}
+          </span><br>
+          <small class="vr-cell-time">${p.vehicle_number || ''}</small>
+        </td>
+        <td><span class="vr-cell-text"><i class="fas fa-city mr-1" style="color:#f6c23e;font-size:11px;"></i>${p.city || '—'}</span></td>
+        <td>${badgeHTML(p.approval_status)}</td>
+        <td>
+          <div class="vr-cell-text-sm"><i class="fas fa-calendar-alt mr-1" style="color:#A82323;font-size:10px;"></i>${formatDate(p.created_at)}</div>
+          <small class="vr-cell-time">${formatTime(p.created_at)}</small>
+        </td>
+        <td>${actionHTML(p)}</td>
+      </tr>`).join('');
+
+    document.getElementById('footerCount').textContent = filtered.length;
+  }
+
+  // ── Summary Cards ─────────────────────────────────────────────────────────
+  function renderSummaryCards() {
+    const pending  = partners.filter(p => p.approval_status === 'pending').length;
+    const approved = partners.filter(p => p.approval_status === 'approved').length;
+    const rejected = partners.filter(p => p.approval_status === 'rejected').length;
+    const total    = partners.length;
+    document.getElementById('summaryCards').innerHTML = `
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card_ border-left-warning shadow h-100 py-2 bg-white">
+          <div class="card-body">
+            <div class="row no-gutters align-items-center">
+              <div class="col mr-2">
+                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Pending</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">${pending}</div>
+              </div>
+              <div class="col-auto"><i class="fas fa-hourglass-half fa-2x text-warning"></i></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card_ border-left-success shadow h-100 py-2 bg-white">
+          <div class="card-body">
+            <div class="row no-gutters align-items-center">
+              <div class="col mr-2">
+                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Approved</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">${approved}</div>
+              </div>
+              <div class="col-auto"><i class="fas fa-check-circle fa-2x text-success"></i></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card_ shadow h-100 py-2 bg-white" style="border-left:5px solid #dc3545;border-radius:8px;">
+          <div class="card-body">
+            <div class="row no-gutters align-items-center">
+              <div class="col mr-2">
+                <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Rejected</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">${rejected}</div>
+              </div>
+              <div class="col-auto"><i class="fas fa-times-circle fa-2x text-danger"></i></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card_ border-left-primary shadow h-100 py-2 bg-white">
+          <div class="card-body">
+            <div class="row no-gutters align-items-center">
+              <div class="col mr-2">
+                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Partners</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">${total}</div>
+              </div>
+              <div class="col-auto"><i class="fas fa-motorcycle fa-2x text-primary"></i></div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  // ── Event Delegation ──────────────────────────────────────────────────────
+  document.addEventListener('click', function(e) {
+    const viewBtn = e.target.closest('.view-detail-btn');
+    if (viewBtn) {
+      e.preventDefault();
+      openDetailModal(parseInt(viewBtn.dataset.id));
+      return;
+    }
+    const actionBtn = e.target.closest('.action-btn');
+    if (actionBtn) {
+      const id     = parseInt(actionBtn.dataset.id);
+      const action = actionBtn.dataset.action;
+      const p      = partners.find(x => x.id === id);
+      if (!p) return;
+
+      fetch("{% url 'verifyDeliveryPartnerAction' %}", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken'),
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({ id: id, action: action })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status) {
+          p.approval_status = action === 'approve' ? 'approved' : 'rejected';
+          renderSummaryCards();
+          renderTable(currentFilter, document.getElementById('tableSearch').value);
+        } else {
+          alert(data.message || 'Action failed.');
+        }
+      })
+      .catch(() => alert('Network error.'));
+    }
+  });
+
+  // ── Filter Buttons ────────────────────────────────────────────────────────
+  document.querySelectorAll('.vr-filter-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      document.querySelectorAll('.vr-filter-btn').forEach(b => b.className = 'vr-btn-filter vr-filter-btn');
+      this.classList.add(`active-${this.dataset.filter}`);
+      renderTable(this.dataset.filter, document.getElementById('tableSearch').value);
+    });
+  });
+
+  // ── Search ────────────────────────────────────────────────────────────────
+  document.getElementById('tableSearch').addEventListener('keyup', function() {
+    renderTable(currentFilter, this.value);
+  });
+
+  // ── Last Updated ──────────────────────────────────────────────────────────
+  function setLastUpdated() {
+    const now = new Date();
+    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    let h = now.getHours(), m = now.getMinutes(), ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    document.getElementById('lastUpdated').textContent =
+      `${String(now.getDate()).padStart(2,'0')} ${months[now.getMonth()]} ${now.getFullYear()}, ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')} ${ampm}`;
+  }
+
+  // ── CSRF helper ───────────────────────────────────────────────────────────
+  function getCookie(name) {
+    let c = null;
+    document.cookie.split(';').forEach(s => {
+      const [k, v] = s.trim().split('=');
+      if (k === name) c = decodeURIComponent(v);
+    });
+    return c;
+  }
+
+  // ── Load from API ─────────────────────────────────────────────────────────
+  function loadPartners() {
+    fetch("{% url 'verifyDeliveryPartnerView' %}", {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status) {
+        partners = data.partners;
+        renderSummaryCards();
+        renderTable('all');
+        setLastUpdated();
+      } else {
+        console.error('Failed to load delivery partners');
+      }
+    })
+    .catch(err => console.error('Error:', err));
+  }
+
+  loadPartners();
+</script>
+
+{% include 'footer.html' %}
+{% include 'footer_link.html' %}

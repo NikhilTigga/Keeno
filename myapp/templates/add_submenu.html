@@ -1,0 +1,127 @@
+{% include 'header.html' %}
+{% include 'navbar.html' %}
+{% include 'sidebar.html' %}
+{% load static %}
+<Style>
+   fieldset.scheduler-border{
+      border: 1px dashed #000000 !important;
+      border-radius: 10px;
+       padding: 10px !important;
+       margin: 0 0 1.5em 0 !important;
+       -webkit-box-shadow: 0px 0px 0px 0px #000 !important;
+       box-shadow: 0px 0px 0px 0px #000 !important;
+   }
+   .scheduler-border legend{
+       width: auto !important;
+       font-size:18px !important;
+   }
+   .card {
+      background-color: rgb(255 255 255 / 0%);
+      box-shadow: 0 0 10px 1px rgba(0, 0, 0, 0.25);
+      backdrop-filter: blur(5px);
+    }
+</Style>
+ 
+
+
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper" style="background-image:  url({% static '../static/dist/img/dashbg1.jpg' %});background-size:cover;">
+   <!-- Content Header (Page header) -->
+   <div class="content-header">
+   <div class="container-fluid">
+      <div class="row mb-2">
+         <div class="col-sm-6">
+         <h1 class="m-0">Dashboard</h1>
+         </div><!-- /.col -->
+         <div class="col-sm-6">
+         <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="#">Home</a></li>
+            <li class="breadcrumb-item active">Dashboard v1</li>
+         </ol>
+         </div><!-- /.col -->
+      </div>
+      <!-- /.row -->
+   </div><!-- /.container-fluid -->
+   </div>
+   <!-- /.content-header -->
+
+
+
+   <div class="card m-5">
+      <div class="card-header bg-dark">
+         <h3 class="card-title text-light">Add Menu</h3>
+      </div>
+      <div class="card-body">
+         {% include 'msg.html' %}
+         <form method="POST" >
+            {% csrf_token %}
+            <div class="form-row">
+               
+               <div class="form-group col-md-3">
+                  <label class="form-label">Parent Menu</label>
+                  <select name="menu" class="form-control" required>
+                     <option value="">Choose Parent Menu...</option>
+                     {% for menu in menus %}
+                     <option value="{{ menu.id }}">{{ menu.name }}</option>
+                     {% endfor %}
+                  </select>
+               </div>
+
+               <div class="form-group col-md-3">
+                  <label class="form-label">Sub-Menu Name</label>
+                  <input type="text" name="name" class="form-control" required  placeholder="Menu Name...">
+               </div>
+
+               <div class="form-group col-md-3">
+                  <label class="form-label">Router Name</label>
+                  <input type="text" name="url" class="form-control"  placeholder="Router Name...">
+               </div>
+
+               <div class="form-group col-md-3">
+                  <label for="icon">Icon</label>
+                  <input type="text" name="icon" class="form-control" placeholder="Icon Name...">
+               </div>
+
+            </div>
+            <div class="text-end">
+               <button type="submit" class="btn btn-success">Save</button>
+            </div>
+         </form>
+      </div>
+   </div>
+
+
+   <div class="card m-5">
+      <div class="card-header bg-dark">
+         <h3 class="card-title text-light">Added Menu List</h3>
+      </div>
+      <div class="card-body">
+         <table id="example1" class="table data-table stripe hover nowrap  table-striped text-sm">
+            <thead>
+               <tr>
+                  <th>IDs</th>
+                  <th>Menu Name</th>
+                  <th>Sub-Menu Name</th>
+                  <th>Router name</th>
+                  <th>Icon</th>
+               </tr>
+            </thead>
+            <tbody class="text-bold">
+               {% for i in sub_menu %}
+               <tr>
+                  <td>{{forloop.counter}}</td>
+                  <td>{{i.menu.name}}</td>
+                  <td>{{i.name}}</td>
+                  <td>{{i.url}}</td>
+                  <td>{{i.icons}}</td>
+               </tr>
+               {% endfor %}
+            </tbody>
+         </table>
+      </div>
+   </div>
+
+
+</div>    
+{% include 'footer.html' %}
+{% include 'footer_link.html' %}

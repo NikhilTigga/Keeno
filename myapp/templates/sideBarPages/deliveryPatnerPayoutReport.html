@@ -1,0 +1,225 @@
+{% include 'header.html' %}
+{% include 'navbar.html' %}
+{% include 'sidebar.html' %}
+{% load static %}
+
+<link rel="stylesheet" href="{% static 'dist/css/myCustome.css' %}">
+
+<div class="content-wrapper p-2"
+  style="background-image:url('{% static '../static/dist/img/SriKrishnabackgroundimage3.jpg' %}');background-size:cover; min-height:100vh;">
+
+  <!-- Header -->
+  <div class="mb-3 bg-white p-3 rounded shadow-sm">
+    <h4 class="mb-0">Delivery Partner Payout Report</h4>
+  </div>
+
+  <!-- Stats -->
+  <div class="row mb-3">
+    <div class="col-lg-4 col-6">
+      <div class="card p-3 shadow-sm" style="border-left:4px solid #A82323;">
+        <p class="text-muted mb-1">Total Paid</p>
+        <h5 id="totalPaid">₹0</h5>
+      </div>
+    </div>
+
+    <div class="col-lg-4 col-6">
+      <div class="card p-3 shadow-sm" style="border-left:4px solid #ffc107">
+        <p class="text-muted mb-1">Total Orders</p>
+        <h5 id="totalOrders">0</h5>
+      </div>
+    </div>
+
+    <div class="col-lg-4 col-6">
+      <div class="card p-3 shadow-sm" style="border-left:4px solid #17a2b8;">
+        <p class="text-muted mb-1">Total Partners</p>
+        <h5 id="totalPartners">0</h5>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+
+
+  <!-- Table -->
+  <div class="card shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center" style="background:#A82323">
+      <h6 class="mb-0">Recent Payouts</h6>
+      <input type="text" id="tableSearch" placeholder="Search..." class="form-control form-control-sm"
+        style="width:200px;">
+      <div class="d-flex mb-3 align-items-center gap-2">
+        <label class="mb-0 text-white me-4 ">From:</label>
+        <input type="date" id="fromDate" class="form-control form-control-sm me-4" style="width:150px;">
+
+        <label class="mb-0 text-white me-4">To:</label>
+        <input type="date" id="toDate" class="form-control form-control-sm me-4" style="width:150px;">
+
+        <button class="btn btn-light btn-sm" id="filterBtn">Filter</button>
+        <button class="btn btn-secondary btn-sm" id="resetBtn">Reset</button>
+      </div>
+    </div>
+
+
+    <div class="table-responsive">
+      <table class="table mb-0">
+        <thead class="bg-light">
+          <tr>
+            <th>#</th>
+            <th>Partner</th>
+            <th>Period</th>
+            <th>Incentive</th>
+            <th>Fixed</th>
+            <th>Total Paid</th>
+            <th>Orders</th>
+          </tr>
+        </thead>
+        <tbody id="historyTbody">
+          <tr>
+            <td colspan="7" class="text-center p-4 text-muted">
+              No payout history
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card-footer d-flex justify-content-between">
+      <small>Total Records: <strong id="footerCount">0</strong></small>
+      <small>Last Updated: <span id="lastUpdated">—</span></small>
+    </div>
+  </div>
+</div>
+
+<!-- ================= JS ================= -->
+
+<script>
+  let payoutHistory = [];
+
+  /* Load API with optional from/to dates */
+  function loadHistory() {
+    const from = document.getElementById("fromDate").value;
+    const to = document.getElementById("toDate").value;
+
+    let url = "{% url 'deliveryReportGetWalletHistoryAPI' %}";
+    if (from || to) {
+      url += `?from=${from || ''}&to=${to || ''}`;
+    }
+
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        if (data.status) {
+          payoutHistory = data.data;
+          renderTable(payoutHistory);
+          updateStats();
+        }
+      })
+      .catch(err => console.error(err));
+  }
+
+  /* Render Table */
+  function renderTable(data) {
+    const tbody = document.getElementById("historyTbody");
+    tbody.innerHTML = "";
+
+    if (data.length === 0) {
+      tbody.innerHTML = `<tr>
+      <td colspan="7" class="text-center p-4 text-muted">No payout history</td>
+    </tr>`;
+      return;
+    }
+
+    data.forEach((d, index) => {
+      const total = parseFloat(d.total_paid);
+      let badgeClass = total > 500 ? "success" : "warning";
+
+      const row = `
+      <tr>
+        <td>${index + 1}</td>
+        <td>
+          <div class="d-flex align-items-center">
+            <div class="avatar"><i class="fas fa-motorcycle"></i></div>
+            <div class="ml-2">
+              <strong>${d.partner_name}</strong><br>
+              <small class="text-muted">ID: ${d.partner_id}</small>
+            </div>
+          </div>
+        </td>
+        <td>${d.period}<br><small class="text-muted">${d.created_at}</small></td>
+        <td class="text-primary">₹${parseFloat(d.incentive_total).toFixed(2)}</td>
+        <td>₹${parseFloat(d.fixed_amount).toFixed(2)}</td>
+        <td><span class="badge badge-${badgeClass}">₹${parseFloat(d.total_paid).toFixed(2)}</span></td>
+        <td><span class="badge badge-info">${d.orders_count} Orders</span></td>
+      </tr>
+    `;
+      tbody.insertAdjacentHTML("beforeend", row);
+    });
+
+    document.getElementById("footerCount").textContent = data.length;
+    setLastUpdated();
+  }
+
+  /* Stats */
+  function updateStats() {
+    let totalPaid = 0, totalOrders = 0, partners = new Set();
+
+    payoutHistory.forEach(item => {
+      totalPaid += parseFloat(item.total_paid);
+      totalOrders += item.orders_count;
+      partners.add(item.partner_id);
+    });
+
+    document.getElementById("totalPaid").textContent = "₹" + totalPaid.toFixed(2);
+    document.getElementById("totalOrders").textContent = totalOrders;
+    document.getElementById("totalPartners").textContent = partners.size;
+  }
+
+  /* Last Updated */
+  function setLastUpdated() {
+    const now = new Date();
+    document.getElementById("lastUpdated").textContent = now.toLocaleString();
+  }
+
+  /* Search */
+  document.getElementById("tableSearch").addEventListener("input", function () {
+    const val = this.value.toLowerCase();
+    document.querySelectorAll("#historyTbody tr").forEach(row => {
+      row.style.display = row.innerText.toLowerCase().includes(val) ? "" : "none";
+    });
+  });
+
+  /* Filter & Reset Buttons */
+  document.getElementById("filterBtn").addEventListener("click", loadHistory);
+  document.getElementById("resetBtn").addEventListener("click", function () {
+    document.getElementById("fromDate").value = "";
+    document.getElementById("toDate").value = "";
+    loadHistory();
+  });
+
+  /* Load on page start */
+  document.addEventListener("DOMContentLoaded", loadHistory);
+</script>
+
+<!-- ================= STYLE ================= -->
+<style>
+  .avatar {
+    width: 36px;
+    height: 36px;
+    background: #A82323;
+    color: #fff;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  table tbody tr:hover {
+    background: #f9f9f9;
+  }
+
+  .card {
+    border-radius: 10px;
+  }
+</style>
+
+{% include 'footer.html' %}
+{% include 'footer_link.html' %}

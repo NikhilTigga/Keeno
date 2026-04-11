@@ -1,0 +1,234 @@
+{% load static %}
+
+<!-- Main Sidebar Container -->
+  <aside class="main-sidebar sidebar-dark-primary  elevation-4"  style="background:#2F6B3F">
+    <!-- Brand Logo -->
+    <a href="" class="brand-link bg-white">
+      <img src="{% static '../static/dist/img/SriKrishnaLogo1.png' %}" alt="Ad Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
+      <span class="text-bold ml-2 text-dark text-sm">Keeno</span>
+    </a>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <!-- Sidebar user panel (optional) -->
+      <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+        <div class="image">
+          <img src="{% static '../static/dist/img/u-logo.png' %}" class="img-circle elevation-2" alt="User Image">
+        </div>
+        <div class="info">
+          {% if request.session.admin_email %}
+          <a href="" class="d-block text-light">{{request.session.role}}</a>
+          {% else %}
+          <a href="" class="d-block text-light"></a>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- SidebarSearch Form -->
+      <div class="form-inline">
+        <div class="input-group" data-widget="sidebar-search">
+          <input class="form-control form-control-sidebar" type="search" placeholder="Search" aria-label="Search">
+          <div class="input-group-append">
+            <button class="btn btn-sidebar">
+              <i class="fas fa-search fa-fw"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar Menu -->
+      <nav class="mt-2">
+        <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+          <!-- Add icons to the links using the .nav-icon class
+               with font-awesome or any other icon font library -->
+          <li class="nav-item menu-open">
+            {% comment %} <a href="/" class="nav-link active">
+              <i class="nav-icon fas fa-tachometer-alt"></i>
+              <p>
+                Dashboard
+                <!-- <i class="right fas fa-angle-left"></i> -->
+              </p>
+            </a> {% endcomment %}
+            <a href="/" class="btn btn-xl bg-primary" style="width:100% ; text-align:left;">
+               <i class="nav-icon fas fa-tachometer-alt"></i>
+               Dashboard
+
+            </a>
+            <ul class="nav nav-treeview">
+              
+            </ul>
+          </li>
+          <li class="nav-item">
+            <a href=" {% url 'verifyCreatorView' %}" class="nav-link">
+            <i class="fas fa-utensils"></i>
+            <p>Verify Resaturant</p>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a href=" {% url 'verifyDeliveryPartnerView' %}" class="nav-link">
+            <i class="fas fa-truck"></i>
+            <p>Verify Delivery Patner</p>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a href=" {% url 'setOrderIncentiveView' %}" class="nav-link">
+            <i class="fas fa-wallet"></i>
+            <p>Set Incentive</p>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a href=" {% url 'setCommissionView' %}" class="nav-link">
+           <i class="fas fa-hand-holding-usd"></i>
+            <p>Set Commission</p>
+            </a>
+          </li>
+
+          {% comment %} <li class="nav-item">
+            <a href=" {% url 'vendorPayoutView' %}" class="nav-link">
+            <i class="fas fa-wallet"></i>
+            <p>Vendor Payouts</p>
+            </a>
+          </li> {% endcomment %}
+
+          <li class="nav-item">
+            <a href=" {% url 'paydeliverypatner' %}" class="nav-link">
+            <i class="fas fa-motorcycle"></i>
+            <p>Delivery Payouts</p>
+            </a>
+          </li>
+
+
+          <li class="nav-item">
+            <a href=" {% url 'vendorPayoutCreatePage' %}" class="nav-link">
+            <i class="fas fa-store"></i>
+            <p>Vendor Payouts</p>
+            </a>
+          </li>
+
+           <li class="nav-item">
+            <a href=" {% url 'global_category_page' %}" class="nav-link">
+            <i class="fas fa-globe"></i>
+            <p>Global Category</p>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a href=" {% url 'spotlight_page' %}" class="nav-link">
+            <i class="fas fa-globe"></i>
+            <p>Spotlights</p>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a href=" {% url 'add_banner' %}" class="nav-link">
+            <i class="fas fa-image"></i>
+            <p>Banners</p>
+            </a>
+          </li>
+          
+          {% comment %} {% if add.role == "Super Admin" %}
+            <!--Dynamic Menu loop-->
+            {% for menu in menus %}
+            <li class="nav-item">
+               <a href="#" class="nav-link">
+                  <i class="{{menu.icons}}"></i>
+                  <p class="ml-2 text-light">
+                     {{menu.name}}
+                     <i class="fas fa-angle-left right"></i>
+                    
+                  </p>
+               </a>
+               <ul class="nav nav-treeview">
+                  {% for submenu in menu.submenus.all %}
+                     {% if submenu.status %}
+                        <li class="nav-item">
+                           <a href="{{submenu.url}}" class="nav-link">
+                           <i class="{{submenu.icons}}"></i>
+                           <p class="text-light">{{submenu.name}}</p>
+                           </a>
+                        </li>
+                     {% endif %}
+                  {% endfor %}
+               </ul>
+            </li>
+            {% endfor %}
+          {% endif %} {% endcomment %}
+
+
+          
+          <li class="nav-item">
+              <a href="#" class="nav-link">
+                <i class="fas fa-poll"></i>
+                <p class="ml-2 text-light">
+                     Reports
+                    <i class="fas fa-angle-left right"></i>
+                </p>
+              </a>
+              
+              <ul class="nav nav-treeview">
+                
+                <li class="nav-item">
+                    <a href="{% url 'vendorPayoutView' %}" class="nav-link">
+                      <i class="fas fa-tasks"></i>
+                      <p class="text-light">Vendor Payout</p>
+                    </a>
+                </li>
+               
+              </ul>
+
+              <ul class="nav nav-treeview">
+                
+                <li class="nav-item">
+                    <a href="{% url 'payoutReportView' %}" class="nav-link">
+                     <i class="fas fa-server"></i>
+                      <p class="text-light">Delivery Payout</p>
+                    </a>
+                </li>
+               
+              </ul>
+          </li>
+
+          <li class="nav-item">
+            <a href=" {% url 'helpSupportPage' %}" class="nav-link">
+            <i class="fas fa-hands-helping"></i>
+            <p>Help and Support</p>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a href=" {% url 'aboutUsPage' %}" class="nav-link">
+            <i class="fas fa-info"></i>
+            <p>About Us</p>
+            </a>
+          </li>
+         
+
+
+
+        <!--For Development Purpose only-->
+           {% comment %} <li class="nav-header text-success">Development Prupose Only</li>
+          <li class="nav-item">
+            <a href="" class="nav-link">
+            <i class="fas fa-circle nav-icon"></i>
+            <p>Add Menu</p>
+            </a>
+          </li>
+      
+          <li class="nav-item">
+            <a href="" class="nav-link">
+            <i class="fas fa-circle nav-icon"></i>
+            <p>Add Sub-Menu</p>
+            </a>
+          </li>  {% endcomment %}
+
+
+
+        </ul>
+      </nav>
+      <!-- /.sidebar-menu -->
+    </div>
+    <!-- /.sidebar -->
+  </aside>

@@ -1,0 +1,744 @@
+{% include 'header.html' %}
+{% include 'navbar.html' %}
+{% include 'sidebar.html' %}
+{% load static %}
+
+<link rel="stylesheet" href="{% static '../static/dist/css/myCustome.css' %}">
+
+<div class="content-wrapper" style="background-image:url('{% static '../static/dist/img/SriKrishnabackgroundimage3.jpg' %}');background-size:cover;">
+
+  <!-- Header -->
+  <div class="content-header mb-3">
+    <div class="container-fluid bg-white p-2 rounded" style="width:99%">
+      <div class="row mb-2">
+        <div class="col-sm-6"><h1 class="m-0">Commission Settings</h1></div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="/" class="text-danger">Home</a></li>
+            <li class="breadcrumb-item"><a href="/" class="text-danger">Dashboard</a></li>
+            <li class="breadcrumb-item active">Commission Settings</li>
+          </ol>
+        </div>
+      </div><hr>
+    </div>
+  </div>
+
+  <div class="row ml-2 mr-2 mt-2">
+
+    <!-- ── LEFT: Add / Edit Form ─────────────────────────────────────────── -->
+    <div class="col-lg-4 col-12 mb-4">
+      <div class="card shadow-sm vr-card">
+
+        <div class="card-header vr-card-header">
+          <div class="d-flex align-items-center">
+            <div class="vr-header-icon">
+              <i class="fas fa-percent text-white" style="font-size:15px;"></i>
+            </div>
+            <div>
+              <p class="vr-header-title mb-0" id="formTitle">Add Commission Rule</p>
+              <small class="vr-header-subtitle">Configure restaurant commission structure</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body" style="padding:20px;">
+
+          <input type="hidden" id="editId">
+
+          <!-- Restaurant (optional – global if blank) -->
+          <div class="si-form-group">
+            <label class="si-label">
+              <i class="fas fa-store si-label-icon"></i>
+              Restaurant
+            </label>
+            <div class="si-input-wrapper">
+              <select id="restaurantSelect" class="form-control si-input si-select">
+                <option value="">— Global (All Restaurants) —</option>
+                {% for r in restaurants %}
+                  <option value="{{ r.id }}">{{ r.restaurantname }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <small class="si-hint">Leave blank to apply as a global default commission</small>
+          </div>
+
+          <!-- Commission Type -->
+          <div class="si-form-group">
+            <label class="si-label">
+              <i class="fas fa-tags si-label-icon"></i>
+              Commission Type
+            </label>
+            <div class="si-type-toggle" id="typeToggle">
+              <button type="button" class="si-type-btn active" data-value="percentage" onclick="setType('percentage')">
+                <i class="fas fa-percent mr-1"></i> Percentage
+              </button>
+              <button type="button" class="si-type-btn" data-value="fixed" onclick="setType('fixed')">
+                <i class="fas fa-rupee-sign mr-1"></i> Fixed Amount
+              </button>
+            </div>
+            <input type="hidden" id="commissionType" value="percentage">
+          </div>
+
+          <!-- Commission Value -->
+          <div class="si-form-group">
+            <label class="si-label">
+              <i class="fas fa-calculator si-label-icon"></i>
+              Commission Value
+            </label>
+            <div class="si-input-wrapper">
+              <span class="si-input-prefix" id="valuePrefix">%</span>
+              <input type="number" id="commissionValue" class="form-control si-input si-input-prefixed"
+                     placeholder="e.g. 15" min="0" step="0.01">
+            </div>
+            <small class="si-hint" id="valueHint">Percentage of order value charged as commission</small>
+          </div>
+
+          <!-- Min / Max Commission (optional) -->
+          <div class="row">
+            <div class="col-6">
+              <div class="si-form-group">
+                <label class="si-label">
+                  <i class="fas fa-arrow-down si-label-icon"></i>
+                  Min (₹)
+                </label>
+                <div class="si-input-wrapper">
+                  <span class="si-input-prefix">₹</span>
+                  <input type="number" id="minCommission" class="form-control si-input si-input-prefixed"
+                         placeholder="Optional" min="0" step="0.01">
+                </div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="si-form-group">
+                <label class="si-label">
+                  <i class="fas fa-arrow-up si-label-icon"></i>
+                  Max (₹)
+                </label>
+                <div class="si-input-wrapper">
+                  <span class="si-input-prefix">₹</span>
+                  <input type="number" id="maxCommission" class="form-control si-input si-input-prefixed"
+                         placeholder="Optional" min="0" step="0.01">
+                </div>
+              </div>
+            </div>
+          </div>
+          <small class="si-hint" style="margin-top:-10px; display:block;">
+            Cap commission with a floor &amp; ceiling (optional, applicable for percentage type)
+          </small>
+
+          <!-- Is Active -->
+          <div class="si-form-group mt-3">
+            <div class="d-flex align-items-center" style="gap:10px;">
+              <label class="si-toggle-wrap mb-0">
+                <input type="checkbox" id="isActive" checked>
+                <span class="si-toggle-slider"></span>
+              </label>
+              <span style="font-size:13px; font-weight:600; color:#444;">Active</span>
+              <small class="text-muted" style="font-size:11px;">Rule applies immediately when active</small>
+            </div>
+          </div>
+
+          <!-- Buttons -->
+          <div class="d-flex" style="gap:8px; margin-top:20px;">
+            <button class="btn si-btn-save flex-fill" id="saveBtn" onclick="saveCommission()">
+              <i class="fas fa-save mr-1"></i><span id="saveBtnText">Save Rule</span>
+            </button>
+            <button class="btn si-btn-cancel" id="cancelBtn" onclick="resetForm()" style="display:none;">
+              <i class="fas fa-times mr-1"></i>Cancel
+            </button>
+          </div>
+
+          <!-- Inline feedback -->
+          <div id="formAlert" style="display:none; margin-top:12px;"></div>
+
+        </div>
+      </div>
+
+      <!-- Info card -->
+      <div class="card shadow-sm mt-3" style="border-radius:10px; border-left:4px solid #A82323;">
+        <div class="card-body py-3 px-3">
+          <p style="font-size:12px; font-weight:700; color:#A82323; margin-bottom:6px;">
+            <i class="fas fa-info-circle mr-1"></i>How it works
+          </p>
+          <p style="font-size:12px; color:#666; margin:0; line-height:1.7;">
+            <strong>Percentage:</strong> A % of each order value is charged.<br>
+            <strong>Fixed:</strong> A flat ₹ amount per order.<br>
+            Restaurant-specific rules override the global default.
+            Use Min/Max caps to bound percentage commissions.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── RIGHT: Commission Rules Table ──────────────────────────────────── -->
+    <div class="col-lg-8 col-12 mb-4">
+      <div class="card shadow-sm vr-card">
+
+        <div class="card-header vr-card-header">
+          <div class="d-flex flex-wrap justify-content-between align-items-center" style="gap:10px;">
+            <div class="d-flex align-items-center">
+              <div class="vr-header-icon">
+                <i class="fas fa-list-ol text-white" style="font-size:15px;"></i>
+              </div>
+              <div>
+                <p class="vr-header-title mb-0">Active Commission Rules</p>
+                <small class="vr-header-subtitle">All configured restaurant commissions</small>
+              </div>
+            </div>
+            <div class="d-flex align-items-center" style="gap:8px;">
+              <!-- Filter: All / Active / Inactive -->
+              <select id="statusFilter" class="form-control form-control-sm" style="width:110px; border-radius:6px; font-size:12px;" onchange="renderTable()">
+                <option value="">All Status</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+              <div class="vr-search-wrapper">
+                <i class="fas fa-search"></i>
+                <input type="text" id="tableSearch" placeholder="Search..." class="form-control form-control-sm vr-search-input" oninput="renderTable()">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table mb-0 vr-table" id="commissionTable">
+              <thead>
+                <tr>
+                  <th style="width:40px;">#</th>
+                  <th>Restaurant</th>
+                  <th>Type</th>
+                  <th>Value</th>
+                  <th>Min / Max</th>
+                  <th>Status</th>
+                  <th>Created On</th>
+                  <th style="width:110px; text-align:center;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="commissionTbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="vr-card-footer">
+          <small class="vr-footer-count">
+            <i class="fas fa-table mr-1" style="color:#A82323;"></i>
+            Showing <strong id="footerCount">0</strong> rule(s)
+          </small>
+          <small class="vr-footer-time">
+            <i class="fas fa-sync-alt mr-1"></i>
+            Last updated: <span id="lastUpdated"></span>
+          </small>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── Delete Confirm Modal ──────────────────────────────────────────────── -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:400px;" role="document">
+    <div class="modal-content" style="border-radius:12px; overflow:hidden;">
+      <div class="modal-header" style="background:#A82323; padding:14px 20px;">
+        <h6 class="modal-title text-white mb-0"><i class="fas fa-exclamation-triangle mr-2"></i>Confirm Delete</h6>
+        <button type="button" class="close text-white" data-dismiss="modal" style="opacity:1;"><span>&times;</span></button>
+      </div>
+      <div class="modal-body text-center" style="padding:24px;">
+        <i class="fas fa-trash-alt" style="font-size:38px; color:#A82323; margin-bottom:12px; display:block;"></i>
+        <p style="font-size:14px; color:#333; font-weight:600; margin-bottom:4px;">Delete this commission rule?</p>
+        <p style="font-size:12px; color:#888; margin:0;" id="deleteModalDesc">This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer" style="justify-content:center; gap:10px; border-top:1px solid #f0f0f0; padding:14px;">
+        <button class="btn btn-sm btn-secondary" data-dismiss="modal" style="border-radius:6px; font-size:12px; min-width:80px;">Cancel</button>
+        <button class="btn btn-sm" id="confirmDeleteBtn" style="background:#A82323; color:#fff; border-radius:6px; font-size:12px; min-width:80px;">
+          <i class="fas fa-trash-alt mr-1"></i>Delete
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Styles ─────────────────────────────────────────────────────────────── -->
+<style>
+  /* ── Form Groups ── */
+  .si-form-group { margin-bottom: 18px; }
+
+  .si-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #444;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: block;
+    margin-bottom: 6px;
+  }
+  .si-label-icon {
+    color: #A82323;
+    margin-right: 5px;
+    font-size: 11px;
+  }
+
+  /* ── Input wrapper ── */
+  .si-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .si-input {
+    border-radius: 8px;
+    border: 1.5px solid #e0e0e0;
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    height: 40px;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+  .si-input:focus {
+    border-color: #A82323;
+    box-shadow: 0 0 0 3px rgba(168,35,35,0.08);
+    outline: none;
+  }
+  .si-select { padding-right: 28px; cursor: pointer; }
+  .si-input-prefix {
+    position: absolute;
+    left: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #A82323;
+    pointer-events: none;
+    z-index: 2;
+  }
+  .si-input-prefixed { padding-left: 26px !important; }
+  .si-hint {
+    font-size: 11px;
+    color: #aaa;
+    margin-top: 4px;
+    display: block;
+  }
+
+  /* ── Type Toggle ── */
+  .si-type-toggle {
+    display: flex;
+    gap: 8px;
+  }
+  .si-type-btn {
+    flex: 1;
+    height: 38px;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 8px;
+    background: #f8f8f8;
+    color: #666;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .si-type-btn.active {
+    background: #A82323;
+    border-color: #A82323;
+    color: #fff;
+  }
+  .si-type-btn:hover:not(.active) {
+    border-color: #A82323;
+    color: #A82323;
+    background: #fff5f5;
+  }
+
+  /* ── Toggle Switch ── */
+  .si-toggle-wrap {
+    position: relative;
+    display: inline-block;
+    width: 42px;
+    height: 22px;
+    cursor: pointer;
+  }
+  .si-toggle-wrap input { opacity: 0; width: 0; height: 0; }
+  .si-toggle-slider {
+    position: absolute;
+    inset: 0;
+    background: #ccc;
+    border-radius: 22px;
+    transition: 0.3s;
+  }
+  .si-toggle-slider:before {
+    content: '';
+    position: absolute;
+    width: 16px; height: 16px;
+    left: 3px; bottom: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: 0.3s;
+  }
+  .si-toggle-wrap input:checked + .si-toggle-slider { background: #A82323; }
+  .si-toggle-wrap input:checked + .si-toggle-slider:before { transform: translateX(20px); }
+
+  /* ── Buttons ── */
+  .si-btn-save {
+    background: #A82323;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    height: 40px;
+    transition: background 0.2s;
+  }
+  .si-btn-save:hover { background: #8e1c1c; color: #fff; }
+  .si-btn-cancel {
+    background: #f1f1f1;
+    color: #555;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    height: 40px;
+    min-width: 90px;
+    transition: background 0.2s;
+  }
+  .si-btn-cancel:hover { background: #e0e0e0; }
+
+  /* ── Table Badges ── */
+  .si-type-badge-pct {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: #fff3cd; border: 1px solid #ffc107;
+    color: #856404; border-radius: 20px;
+    padding: 3px 10px; font-size: 11px; font-weight: 700;
+  }
+  .si-type-badge-fix {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: #cfe2ff; border: 1px solid #0d6efd;
+    color: #084298; border-radius: 20px;
+    padding: 3px 10px; font-size: 11px; font-weight: 700;
+  }
+  .si-value-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: #d4edda; border: 1px solid #28a745;
+    color: #155724; border-radius: 20px;
+    padding: 3px 12px; font-size: 12px; font-weight: 700;
+  }
+  .si-global-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: #f8d7da; border: 1px solid #A82323;
+    color: #A82323; border-radius: 20px;
+    padding: 2px 10px; font-size: 11px; font-weight: 700;
+  }
+  .si-restaurant-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: #e8f0fe; border: 1px solid #4285f4;
+    color: #174ea6; border-radius: 20px;
+    padding: 2px 10px; font-size: 11px; font-weight: 700;
+  }
+  .badge-active {
+    background: #d4edda; color: #155724; border: 1px solid #28a745;
+    border-radius: 20px; padding: 3px 10px; font-size: 11px; font-weight: 700;
+  }
+  .badge-inactive {
+    background: #f8d7da; color: #721c24; border: 1px solid #dc3545;
+    border-radius: 20px; padding: 3px 10px; font-size: 11px; font-weight: 700;
+  }
+
+  /* ── Edit highlight ── */
+  .si-input.editing { border-color: #f6c23e; background: #fffdf0; }
+</style>
+
+<!-- ── Scripts ────────────────────────────────────────────────────────────── -->
+<script>
+  let commissions  = [];
+  let deleteTarget = null;
+
+  // ── Helpers ───────────────────────────────────────────────────────────
+  function formatDate(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    const mo = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    return `${String(d.getDate()).padStart(2,'0')} ${mo[d.getMonth()]} ${d.getFullYear()}`;
+  }
+  function formatTime(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    let h = d.getHours(), m = d.getMinutes(), ap = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')} ${ap}`;
+  }
+  function showAlert(msg, type = 'success') {
+    const el = document.getElementById('formAlert');
+    el.innerHTML = `<div class="alert alert-${type} py-2 px-3" style="font-size:12px; border-radius:8px;">${msg}</div>`;
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 3500);
+  }
+  function getCookie(name) {
+    let c = null;
+    document.cookie.split(';').forEach(s => {
+      const [k, v] = s.trim().split('=');
+      if (k === name) c = decodeURIComponent(v);
+    });
+    return c;
+  }
+  function setLastUpdated() {
+    const now = new Date();
+    const mo = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    let h = now.getHours(), m = now.getMinutes(), ap = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    document.getElementById('lastUpdated').textContent =
+      `${String(now.getDate()).padStart(2,'0')} ${mo[now.getMonth()]} ${now.getFullYear()}, ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')} ${ap}`;
+  }
+
+  // ── Type Toggle ───────────────────────────────────────────────────────
+  function setType(val) {
+    document.getElementById('commissionType').value = val;
+    document.querySelectorAll('.si-type-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.value === val);
+    });
+    const isFixed = val === 'fixed';
+    document.getElementById('valuePrefix').textContent = isFixed ? '₹' : '%';
+    document.getElementById('valueHint').textContent   = isFixed
+      ? 'Fixed rupee amount charged per order'
+      : 'Percentage of order value charged as commission';
+    // Hide min/max for fixed type (less relevant)
+    document.querySelectorAll('#minCommission, #maxCommission').forEach(el => {
+      el.closest('.col-6').style.opacity = isFixed ? '0.4' : '1';
+      el.disabled = isFixed;
+    });
+  }
+
+  // ── Render Table ──────────────────────────────────────────────────────
+  function renderTable() {
+    const search = document.getElementById('tableSearch').value.toLowerCase();
+    const status = document.getElementById('statusFilter').value;
+    const tbody  = document.getElementById('commissionTbody');
+
+    const filtered = commissions.filter(c => {
+      const matchSearch = !search ||
+        (c.restaurant_name || 'global').toLowerCase().includes(search) ||
+        String(c.commission_value).includes(search) ||
+        c.commission_type.toLowerCase().includes(search);
+      const matchStatus = !status ||
+        (status === 'active' && c.is_active) ||
+        (status === 'inactive' && !c.is_active);
+      return matchSearch && matchStatus;
+    });
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8">
+        <div class="vr-empty-state">
+          <i class="fas fa-percent"></i>
+          <p class="vr-empty-title">No Commission Rules Found</p>
+          <small class="vr-empty-subtitle">Add your first rule using the form on the left.</small>
+        </div></td></tr>`;
+      document.getElementById('footerCount').textContent = 0;
+      return;
+    }
+
+    tbody.innerHTML = filtered.map((c, i) => {
+      const typeLabel = c.commission_type === 'percentage' ? 'Percentage' : 'Fixed';
+      const typeBadge = c.commission_type === 'percentage'
+        ? `<span class="si-type-badge-pct"><i class="fas fa-percent" style="font-size:9px;"></i>${typeLabel}</span>`
+        : `<span class="si-type-badge-fix"><i class="fas fa-rupee-sign" style="font-size:9px;"></i>${typeLabel}</span>`;
+
+      const valDisplay = c.commission_type === 'percentage'
+        ? `${parseFloat(c.commission_value).toFixed(2)}%`
+        : `₹${parseFloat(c.commission_value).toFixed(2)}`;
+
+      const minMax = (c.min_commission || c.max_commission)
+        ? `<span style="font-size:11px; color:#555;">
+            ${c.min_commission ? '₹' + parseFloat(c.min_commission).toFixed(0) : '—'}
+            &nbsp;/&nbsp;
+            ${c.max_commission ? '₹' + parseFloat(c.max_commission).toFixed(0) : '—'}
+           </span>`
+        : `<span style="font-size:11px; color:#bbb;">—</span>`;
+
+      const restBadge = c.restaurant_name
+        ? `<span class="si-restaurant-badge"><i class="fas fa-store" style="font-size:9px;"></i>${c.restaurant_name}</span>`
+        : `<span class="si-global-badge"><i class="fas fa-globe" style="font-size:9px;"></i>Global</span>`;
+
+      const statusBadge = c.is_active
+        ? `<span class="badge-active"><i class="fas fa-check-circle mr-1" style="font-size:9px;"></i>Active</span>`
+        : `<span class="badge-inactive"><i class="fas fa-times-circle mr-1" style="font-size:9px;"></i>Inactive</span>`;
+
+      return `
+        <tr>
+          <td><span class="vr-cell-muted font-weight-bold">${i + 1}</span></td>
+          <td>${restBadge}</td>
+          <td>${typeBadge}</td>
+          <td><span class="si-value-badge">${valDisplay}</span></td>
+          <td>${minMax}</td>
+          <td>${statusBadge}</td>
+          <td>
+            <div class="vr-cell-text-sm">
+              <i class="fas fa-calendar-alt mr-1" style="color:#A82323;font-size:10px;"></i>${formatDate(c.created_at)}
+            </div>
+            <small class="vr-cell-time">${formatTime(c.created_at)}</small>
+          </td>
+          <td>
+            <div class="d-flex align-items-center justify-content-center" style="gap:5px;">
+              <a href="#" class="vr-btn vr-btn-view" onclick="editCommission(${c.id}); return false;" title="Edit">
+                <i class="fas fa-edit"></i>
+              </a>
+              <a href="#" class="vr-btn vr-btn-reject" onclick="askDelete(${c.id}, '${c.restaurant_name || 'Global'}'); return false;" title="Delete">
+                <i class="fas fa-trash-alt"></i>
+              </a>
+            </div>
+          </td>
+        </tr>`;
+    }).join('');
+
+    document.getElementById('footerCount').textContent = filtered.length;
+  }
+
+  // ── Load from API ─────────────────────────────────────────────────────
+  function loadCommissions() {
+    fetch("{% url 'setCommissionView' %}", {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.status) {
+        commissions = data.commissions;
+        renderTable();
+        setLastUpdated();
+      }
+    })
+    .catch(err => console.error(err));
+  }
+
+  // ── Save (Create / Update) ────────────────────────────────────────────
+  function saveCommission() {
+    const editId     = document.getElementById('editId').value;
+    const restaurant = document.getElementById('restaurantSelect').value;
+    const type       = document.getElementById('commissionType').value;
+    const value      = document.getElementById('commissionValue').value.trim();
+    const minVal     = document.getElementById('minCommission').value.trim();
+    const maxVal     = document.getElementById('maxCommission').value.trim();
+    const isActive   = document.getElementById('isActive').checked;
+
+    if (!value) {
+      showAlert('<i class="fas fa-exclamation-circle mr-1"></i>Commission value is required.', 'danger');
+      return;
+    }
+    if (parseFloat(value) < 0) {
+      showAlert('<i class="fas fa-exclamation-circle mr-1"></i>Value cannot be negative.', 'danger');
+      return;
+    }
+    if (type === 'percentage' && parseFloat(value) > 100) {
+      showAlert('<i class="fas fa-exclamation-circle mr-1"></i>Percentage cannot exceed 100%.', 'danger');
+      return;
+    }
+    if (minVal && maxVal && parseFloat(minVal) > parseFloat(maxVal)) {
+      showAlert('<i class="fas fa-exclamation-circle mr-1"></i>Min commission cannot exceed Max.', 'danger');
+      return;
+    }
+
+    const payload = {
+      commission_type:  type,
+      commission_value: parseFloat(value),
+      is_active:        isActive,
+      restaurant:       restaurant ? parseInt(restaurant) : null,
+      min_commission:   minVal ? parseFloat(minVal) : null,
+      max_commission:   maxVal ? parseFloat(maxVal) : null,
+    };
+    if (editId) payload.id = parseInt(editId);
+
+    fetch("{% url 'setCommissionSave' %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken'),
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.status) {
+        showAlert(`<i class="fas fa-check-circle mr-1"></i>${data.message}`, 'success');
+        resetForm();
+        loadCommissions();
+      } else {
+        showAlert(`<i class="fas fa-times-circle mr-1"></i>${data.message}`, 'danger');
+      }
+    })
+    .catch(() => showAlert('Network error.', 'danger'));
+  }
+
+  // ── Edit: populate form ───────────────────────────────────────────────
+  function editCommission(id) {
+    const c = commissions.find(x => x.id === id);
+    if (!c) return;
+    document.getElementById('editId').value            = c.id;
+    document.getElementById('restaurantSelect').value  = c.restaurant || '';
+    document.getElementById('commissionValue').value   = parseFloat(c.commission_value).toFixed(2);
+    document.getElementById('minCommission').value     = c.min_commission ? parseFloat(c.min_commission).toFixed(2) : '';
+    document.getElementById('maxCommission').value     = c.max_commission ? parseFloat(c.max_commission).toFixed(2) : '';
+    document.getElementById('isActive').checked        = c.is_active;
+    document.getElementById('formTitle').textContent   = 'Edit Commission Rule';
+    document.getElementById('saveBtnText').textContent = 'Update Rule';
+    document.getElementById('cancelBtn').style.display = 'inline-block';
+    setType(c.commission_type);
+    ['commissionValue','minCommission','maxCommission'].forEach(id => {
+      document.getElementById(id).classList.add('editing');
+    });
+    document.getElementById('commissionValue').focus();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── Reset Form ────────────────────────────────────────────────────────
+  function resetForm() {
+    document.getElementById('editId').value            = '';
+    document.getElementById('restaurantSelect').value  = '';
+    document.getElementById('commissionValue').value   = '';
+    document.getElementById('minCommission').value     = '';
+    document.getElementById('maxCommission').value     = '';
+    document.getElementById('isActive').checked        = true;
+    document.getElementById('formTitle').textContent   = 'Add Commission Rule';
+    document.getElementById('saveBtnText').textContent = 'Save Rule';
+    document.getElementById('cancelBtn').style.display = 'none';
+    setType('percentage');
+    ['commissionValue','minCommission','maxCommission'].forEach(id => {
+      document.getElementById(id).classList.remove('editing');
+    });
+    document.getElementById('formAlert').style.display = 'none';
+  }
+
+  // ── Delete ────────────────────────────────────────────────────────────
+  function askDelete(id, name) {
+    deleteTarget = id;
+    document.getElementById('deleteModalDesc').textContent =
+      `Commission rule for "${name}" will be permanently removed.`;
+    $('#deleteModal').modal('show');
+  }
+
+  document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
+    if (!deleteTarget) return;
+    fetch("{% url 'setCommissionDelete' %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken'),
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify({ id: deleteTarget })
+    })
+    .then(r => r.json())
+    .then(data => {
+      $('#deleteModal').modal('hide');
+      if (data.status) {
+        commissions = commissions.filter(x => x.id !== deleteTarget);
+        renderTable();
+        setLastUpdated();
+      } else {
+        alert(data.message || 'Delete failed.');
+      }
+      deleteTarget = null;
+    })
+    .catch(() => { $('#deleteModal').modal('hide'); alert('Network error.'); });
+  });
+
+  // ── Init ──────────────────────────────────────────────────────────────
+  loadCommissions();
+</script>
+
+{% include 'footer.html' %}
+{% include 'footer_link.html' %}

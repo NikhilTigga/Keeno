@@ -1,0 +1,698 @@
+{% include 'header.html' %}
+{% include 'navbar.html' %}
+{% include 'sidebar.html' %}
+{% load static %}
+
+<link rel="stylesheet" href="{% static '../static/dist/css/myCustome.css' %}">
+
+<div class="content-wrapper" style="background-image:url('{% static '../static/dist/img/SriKrishnabackgroundimage3.jpg' %}');background-size:cover; min-height:100vh;">
+
+  <!-- Header -->
+  <div class="content-header mb-3">
+    <div class="container-fluid bg-white p-2 rounded" style="width:99%">
+      <div class="row mb-2">
+        <div class="col-sm-6"><h1 class="m-0">Pay Delivery Partner</h1></div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="/" class="text-danger">Home</a></li>
+            <li class="breadcrumb-item"><a href="/" class="text-danger">Dashboard</a></li>
+            <li class="breadcrumb-item active">Pay Delivery Partner</li>
+          </ol>
+        </div>
+      </div><hr>
+    </div>
+  </div>
+
+  <div class="row ml-2 mr-2 mt-2">
+
+    <!-- ── LEFT: Payout Form ─────────────────────────────────────────── -->
+    <div class="col-lg-5 col-12 mb-4">
+      <div class="card shadow-sm vr-card">
+
+        <div class="card-header vr-card-header">
+          <div class="d-flex align-items-center">
+            <div class="vr-header-icon">
+              <i class="fas fa-wallet text-white" style="font-size:15px;"></i>
+            </div>
+            <div>
+              <p class="vr-header-title mb-0">Incentive Payout</p>
+              <small class="vr-header-subtitle">Process delivery partner payment</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body" style="padding:20px;">
+
+          <!-- Partner Select -->
+          <div class="pd-form-group">
+            <label class="pd-label">
+              <i class="fas fa-user pd-label-icon"></i>
+              Delivery Partner
+            </label>
+            <div class="pd-select-wrapper">
+              <select id="delivery_partner_id" class="form-control pd-select" onchange="onPartnerChange()">
+                <option value="">— Select Partner —</option>
+                {% for patner in deliveryPatner %}
+                <option value="{{ patner.id }}"
+                  data-name="{{ patner.full_name }}"
+                  data-phone="{{ patner.phone_number }}"
+                  data-city="{{ patner.city }}"
+                  data-status="{{ patner.work_status }}">
+                  {{ patner.full_name }}
+                </option>
+                {% endfor %}
+              </select>
+              <i class="fas fa-chevron-down pd-select-arrow"></i>
+            </div>
+          </div>
+
+          <!-- Partner Info Card (hidden until selected) -->
+          <div id="partnerInfo" class="pd-partner-card" style="display:none;">
+            <div class="d-flex align-items-center" style="gap:12px;">
+              <div class="pd-avatar">
+                <i class="fas fa-motorcycle"></i>
+              </div>
+              <div style="flex:1;">
+                <p class="pd-partner-name mb-0" id="infoName">—</p>
+                <small class="pd-partner-meta" id="infoPhone">—</small>
+              </div>
+              <span class="pd-status-badge" id="infoStatus">—</span>
+            </div>
+            <div class="pd-partner-meta-row mt-2">
+              <span><i class="fas fa-map-marker-alt mr-1" style="color:#A82323;"></i><span id="infoCity">—</span></span>
+            </div>
+          </div>
+
+          <!-- To Date -->
+          <div class="pd-form-group">
+            <label class="pd-label">
+              <i class="fas fa-calendar-alt pd-label-icon"></i>
+              To Date
+            </label>
+            <div class="pd-input-wrapper">
+              <input type="date" id="to_date" class="form-control pd-input">
+            </div>
+            <small class="pd-hint">All pending incentives up to this date will be included</small>
+          </div>
+
+          <!-- Fixed Amount -->
+          <div class="pd-form-group">
+            <label class="pd-label">
+              <i class="fas fa-rupee-sign pd-label-icon"></i>
+              Fixed Amount (₹)
+            </label>
+            <div class="pd-input-wrapper">
+              <span class="pd-input-prefix">₹</span>
+              <input type="number" id="fixed_amount" class="form-control pd-input pd-input-prefixed"
+                placeholder="0.00" min="0" step="0.01" value="0" oninput="updatePreview()">
+            </div>
+            <small class="pd-hint">Optional bonus added on top of order incentives</small>
+          </div>
+
+          <!-- Payment Preview -->
+          <div class="pd-preview-box" id="previewBox">
+            <p class="pd-preview-title"><i class="fas fa-calculator mr-1"></i>Payment Preview</p>
+            <div class="pd-preview-row">
+              <span>Order Incentives</span>
+              <span id="prevIncentive" class="pd-preview-val">—</span>
+            </div>
+            <div class="pd-preview-row">
+              <span>Fixed Amount</span>
+              <span id="prevFixed" class="pd-preview-val">₹0.00</span>
+            </div>
+            <div class="pd-preview-divider"></div>
+            <div class="pd-preview-row pd-preview-total">
+              <span>Estimated Total</span>
+              <span id="prevTotal" class="pd-preview-val">—</span>
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <button class="btn pd-btn-pay w-100 mt-3" id="payBtn" onclick="payIncentive()">
+            <i class="fas fa-paper-plane mr-2"></i>Process Payment
+          </button>
+
+          <!-- Alert -->
+          <div id="formAlert" style="display:none; margin-top:12px;"></div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ── RIGHT: Result + History ───────────────────────────────────── -->
+    <div class="col-lg-7 col-12 mb-4">
+
+      <!-- Success Result Card -->
+      <div id="resultCard" class="card shadow-sm vr-card mb-3" style="display:none;">
+        <div class="card-header" style="background:linear-gradient(135deg,#1a7a3c,#28a745); padding:14px 20px; border-radius:10px 10px 0 0;">
+          <div class="d-flex align-items-center">
+            <div style="width:34px;height:34px;background:rgba(255,255,255,0.2);border-radius:8px;display:flex;align-items:center;justify-content:center;margin-right:10px;">
+              <i class="fas fa-check-circle text-white" style="font-size:16px;"></i>
+            </div>
+            <div>
+              <p class="mb-0" style="font-size:13px;font-weight:700;color:#fff;">Payment Successful</p>
+              <small style="color:rgba(255,255,255,0.8);font-size:11px;">Transaction processed</small>
+            </div>
+          </div>
+        </div>
+        <div class="card-body" style="padding:20px;">
+          <div class="row" id="resultContent"></div>
+        </div>
+      </div>
+
+      <!-- Recent Payments Table -->
+      <div class="card shadow-sm vr-card">
+        <div class="card-header vr-card-header">
+          <div class="d-flex flex-wrap justify-content-between align-items-center" style="gap:10px;">
+            <div class="d-flex align-items-center">
+              <div class="vr-header-icon">
+                <i class="fas fa-history text-white" style="font-size:15px;"></i>
+              </div>
+              <div>
+                <p class="vr-header-title mb-0">Recent Payouts</p>
+                <small class="vr-header-subtitle">Latest delivery partner payments</small>
+              </div>
+            </div>
+            <div class="vr-search-wrapper">
+              <i class="fas fa-search"></i>
+              <input type="text" id="tableSearch" placeholder="Search partner..." class="form-control form-control-sm vr-search-input" oninput="filterHistory()">
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table mb-0 vr-table">
+              <thead>
+                <tr>
+                  <th style="width:40px;">#</th>
+                  <th>Partner</th>
+                  <th>Period</th>
+                  <th>Incentive</th>
+                  <th>Fixed</th>
+                  <th>Total Paid</th>
+                  <th>Orders</th>
+                </tr>
+              </thead>
+              <tbody id="historyTbody">
+                <tr>
+                  <td colspan="7">
+                    <div class="vr-empty-state">
+                      <i class="fas fa-wallet"></i>
+                      <p class="vr-empty-title">No Payouts Yet</p>
+                      <small class="vr-empty-subtitle">Payments will appear here after processing.</small>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="vr-card-footer">
+          <small class="vr-footer-count">
+            <i class="fas fa-table mr-1" style="color:#A82323;"></i>
+            Showing <strong id="footerCount">0</strong> payout(s)
+          </small>
+          <small class="vr-footer-time">
+            <i class="fas fa-sync-alt mr-1"></i>
+            Last updated: <span id="lastUpdated">—</span>
+          </small>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── Confirm Payment Modal ──────────────────────────────────────────────── -->
+<div class="modal fade" id="confirmModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:420px;" role="document">
+    <div class="modal-content" style="border-radius:12px; overflow:hidden;">
+      <div class="modal-header" style="background:#A82323; padding:14px 20px;">
+        <h6 class="modal-title text-white mb-0"><i class="fas fa-exclamation-triangle mr-2"></i>Confirm Payment</h6>
+        <button type="button" class="close text-white" data-dismiss="modal" style="opacity:1;"><span>&times;</span></button>
+      </div>
+      <div class="modal-body" style="padding:24px;">
+        <div class="text-center mb-3">
+          <div style="width:56px;height:56px;background:#fff3cd;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+            <i class="fas fa-wallet" style="font-size:24px;color:#A82323;"></i>
+          </div>
+          <p style="font-size:14px;font-weight:700;color:#333;margin-bottom:4px;">Process this payout?</p>
+          <p style="font-size:12px;color:#888;margin:0;">This action cannot be undone.</p>
+        </div>
+        <div id="confirmDetails" style="background:#f9f9f9;border-radius:8px;padding:14px;">
+          <!-- filled by JS -->
+        </div>
+      </div>
+      <div class="modal-footer" style="justify-content:center; gap:10px; border-top:1px solid #f0f0f0; padding:14px;">
+        <button class="btn btn-sm btn-secondary" data-dismiss="modal" style="border-radius:6px;font-size:12px;min-width:80px;">Cancel</button>
+        <button class="btn btn-sm" id="confirmPayBtn" style="background:#A82323;color:#fff;border-radius:6px;font-size:12px;min-width:120px;">
+          <i class="fas fa-paper-plane mr-1"></i>Confirm & Pay
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Styles ─────────────────────────────────────────────────────────────── -->
+<style>
+
+  /* ── Form Groups ── */
+  .pd-form-group { margin-bottom: 18px; }
+
+  .pd-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #444;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: block;
+    margin-bottom: 6px;
+  }
+  .pd-label-icon { color: #A82323; margin-right: 5px; font-size: 11px; }
+
+  /* ── Select ── */
+  .pd-select-wrapper { position: relative; }
+  .pd-select {
+    border-radius: 8px;
+    border: 1.5px solid #e0e0e0;
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    height: 42px;
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 36px;
+    transition: border-color 0.2s;
+    cursor: pointer;
+  }
+  .pd-select:focus { border-color: #A82323; box-shadow: 0 0 0 3px rgba(168,35,35,0.08); outline: none; }
+  .pd-select-arrow {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #A82323;
+    font-size: 11px;
+    pointer-events: none;
+  }
+
+  /* ── Input ── */
+  .pd-input-wrapper { position: relative; display: flex; align-items: center; }
+  .pd-input {
+    border-radius: 8px;
+    border: 1.5px solid #e0e0e0;
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    height: 42px;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+  .pd-input:focus { border-color: #A82323; box-shadow: 0 0 0 3px rgba(168,35,35,0.08); outline: none; }
+  .pd-input-prefix {
+    position: absolute;
+    left: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #A82323;
+    pointer-events: none;
+    z-index: 2;
+  }
+  .pd-input-prefixed { padding-left: 26px !important; }
+  .pd-hint { font-size: 11px; color: #aaa; margin-top: 4px; display: block; }
+
+  /* ── Partner Info Card ── */
+  .pd-partner-card {
+    background: #fdf5f5;
+    border: 1.5px solid #f5c6c6;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 18px;
+    animation: fadeInDown 0.25s ease;
+  }
+  @keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .pd-avatar {
+    width: 42px; height: 42px;
+    background: linear-gradient(135deg, #A82323, #d44);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .pd-avatar i { color: #fff; font-size: 18px; }
+  .pd-partner-name { font-size: 13px; font-weight: 700; color: #222; }
+  .pd-partner-meta { font-size: 11px; color: #888; }
+  .pd-partner-meta-row { font-size: 11px; color: #666; }
+  .pd-status-badge {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+  .pd-status-online  { background: #d4edda; color: #155724; border: 1px solid #b8dfc6; }
+  .pd-status-offline { background: #f1f1f1; color: #666;    border: 1px solid #ddd; }
+
+  /* ── Payment Preview ── */
+  .pd-preview-box {
+    background: #f9f9f9;
+    border: 1.5px dashed #ddd;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-top: 6px;
+  }
+  .pd-preview-title { font-size: 11px; font-weight: 700; color: #A82323; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+  .pd-preview-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #555;
+    margin-bottom: 6px;
+  }
+  .pd-preview-val { font-weight: 700; color: #333; }
+  .pd-preview-divider { border-top: 1.5px dashed #ddd; margin: 8px 0; }
+  .pd-preview-total { font-size: 13px; font-weight: 800; color: #A82323; }
+  .pd-preview-total .pd-preview-val { color: #A82323; font-size: 14px; }
+
+  /* ── Pay Button ── */
+  .pd-btn-pay {
+    background: linear-gradient(135deg, #A82323, #c0392b);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    height: 44px;
+    letter-spacing: 0.3px;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(168,35,35,0.25);
+  }
+  .pd-btn-pay:hover { background: linear-gradient(135deg, #8e1c1c, #a93226); color: #fff; transform: translateY(-1px); box-shadow: 0 6px 16px rgba(168,35,35,0.3); }
+  .pd-btn-pay:disabled { opacity: 0.65; transform: none; cursor: not-allowed; }
+
+  /* ── Result Stats ── */
+  .pd-stat-box {
+    background: #f9f9f9;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    border-left: 4px solid #A82323;
+  }
+  .pd-stat-label { font-size: 10px; font-weight: 700; color: #999; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .pd-stat-value { font-size: 18px; font-weight: 800; color: #333; }
+  .pd-stat-value.big { font-size: 22px; color: #A82323; }
+
+  /* ── History Table Badges ── */
+  .pd-amount-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: #d4edda; border: 1px solid #28a745; color: #155724;
+    border-radius: 20px; padding: 2px 10px; font-size: 11px; font-weight: 700;
+  }
+  .pd-period-text { font-size: 11px; color: #666; }
+
+  /* ── Confirm Modal Details ── */
+  .confirm-row {
+    display: flex; justify-content: space-between;
+    font-size: 12px; color: #555; padding: 4px 0;
+    border-bottom: 1px solid #eee;
+  }
+  .confirm-row:last-child { border-bottom: none; }
+  .confirm-row strong { color: #333; }
+</style>
+
+<!-- ── Scripts ─────────────────────────────────────────────────────────── -->
+<script>
+  let payoutHistory = [];
+  let pendingPayload = null;
+
+  // ── Helpers ──────────────────────────────────────────────────────────
+  function getCookie(name) {
+    let c = null;
+    document.cookie.split(';').forEach(s => {
+      const [k, v] = s.trim().split('=');
+      if (k === name) c = decodeURIComponent(v);
+    });
+    return c;
+  }
+  function formatDate(str) {
+    if (!str) return '—';
+    const [y, m, d] = str.split('-');
+    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    return `${d} ${months[parseInt(m)-1]} ${y}`;
+  }
+  function setLastUpdated() {
+    const now = new Date();
+    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    let h = now.getHours(), m = now.getMinutes(), ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    document.getElementById('lastUpdated').textContent =
+      `${String(now.getDate()).padStart(2,'0')} ${months[now.getMonth()]} ${now.getFullYear()}, ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')} ${ampm}`;
+  }
+  function showAlert(msg, type = 'success') {
+    const el = document.getElementById('formAlert');
+    el.innerHTML = `<div class="alert alert-${type} py-2 px-3" style="font-size:12px;border-radius:8px;">${msg}</div>`;
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 4000);
+  }
+
+  // ── Partner Change ────────────────────────────────────────────────────
+  function onPartnerChange() {
+    const sel = document.getElementById('delivery_partner_id');
+    const opt = sel.options[sel.selectedIndex];
+    const info = document.getElementById('partnerInfo');
+
+    if (!sel.value) { info.style.display = 'none'; return; }
+
+    document.getElementById('infoName').textContent  = opt.dataset.name  || '—';
+    document.getElementById('infoPhone').textContent = opt.dataset.phone || '—';
+    document.getElementById('infoCity').textContent  = opt.dataset.city  || '—';
+
+    const status = (opt.dataset.status || 'offline').toLowerCase();
+    const badge  = document.getElementById('infoStatus');
+    badge.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+    badge.className   = 'pd-status-badge pd-status-' + status;
+
+    info.style.display = 'block';
+    updatePreview();
+  }
+
+  // ── Update Preview ────────────────────────────────────────────────────
+  function updatePreview() {
+    const fixed = parseFloat(document.getElementById('fixed_amount').value) || 0;
+    document.getElementById('prevFixed').textContent = '₹' + fixed.toFixed(2);
+    // Incentive total only known after API call
+    document.getElementById('prevIncentive').textContent = '—';
+    document.getElementById('prevTotal').textContent = fixed > 0 ? ('₹' + fixed.toFixed(2) + '+') : '—';
+  }
+
+  // ── Pay Incentive (show confirm modal) ───────────────────────────────
+  function payIncentive() {
+    const partner   = document.getElementById('delivery_partner_id').value;
+    const toDate    = document.getElementById('to_date').value;
+    const fixed     = document.getElementById('fixed_amount').value || 0;
+    const partnerName = document.getElementById('delivery_partner_id').options[
+      document.getElementById('delivery_partner_id').selectedIndex
+    ]?.dataset?.name || '—';
+
+    if (!partner) { showAlert('<i class="fas fa-exclamation-circle mr-1"></i>Please select a delivery partner.', 'danger'); return; }
+    if (!toDate)  { showAlert('<i class="fas fa-exclamation-circle mr-1"></i>Please select a To Date.', 'danger'); return; }
+
+    pendingPayload = { partner, toDate, fixed, partnerName };
+
+    document.getElementById('confirmDetails').innerHTML = `
+      <div class="confirm-row"><span>Partner</span><strong>${partnerName}</strong></div>
+      <div class="confirm-row"><span>Up To Date</span><strong>${formatDate(toDate)}</strong></div>
+      <div class="confirm-row"><span>Fixed Amount</span><strong>₹${parseFloat(fixed).toFixed(2)}</strong></div>
+      <div class="confirm-row"><span>Incentives</span><strong>All pending orders will be settled</strong></div>
+    `;
+
+    $('#confirmModal').modal('show');
+  }
+
+  // ── Confirm & Submit ──────────────────────────────────────────────────
+  document.getElementById('confirmPayBtn').addEventListener('click', function () {
+    if (!pendingPayload) return;
+
+    const btn = document.getElementById('payBtn');
+    this.disabled = true;
+    this.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Processing…';
+    btn.disabled = true;
+
+    fetch("{% url 'payDeliveryPartnerAPI' %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: new URLSearchParams({
+        delivery_partner_id: pendingPayload.partner,
+        to_date: pendingPayload.toDate,
+        fixed_amount: pendingPayload.fixed
+      })
+    })
+    .then(r => r.json())
+    .then(data => {
+      $('#confirmModal').modal('hide');
+      this.disabled = false;
+      this.innerHTML = '<i class="fas fa-paper-plane mr-1"></i>Confirm & Pay';
+      btn.disabled = false;
+
+      if (data.status) {
+        showResultCard(data.data, pendingPayload.partnerName);
+        // addToHistory(data.data, pendingPayload.partnerName);
+        // Update preview with real incentive total
+        document.getElementById('prevIncentive').textContent = '₹' + parseFloat(data.data.incentive_total).toFixed(2);
+        document.getElementById('prevTotal').textContent     = '₹' + parseFloat(data.data.total_paid).toFixed(2);
+        showAlert('<i class="fas fa-check-circle mr-1"></i>Payment processed successfully!', 'success');
+      } else {
+        showAlert(`<i class="fas fa-times-circle mr-1"></i>${data.message}`, 'danger');
+      }
+    })
+    .catch(() => {
+      $('#confirmModal').modal('hide');
+      this.disabled = false;
+      this.innerHTML = '<i class="fas fa-paper-plane mr-1"></i>Confirm & Pay';
+      btn.disabled = false;
+      showAlert('Network error. Please try again.', 'danger');
+    });
+  });
+
+  // ── Show Result Card ──────────────────────────────────────────────────
+  function showResultCard(d, name) {
+    const card = document.getElementById('resultCard');
+    document.getElementById('resultContent').innerHTML = `
+      <div class="col-6 col-md-4">
+        <div class="pd-stat-box">
+          <div class="pd-stat-label"><i class="fas fa-user mr-1"></i>Partner</div>
+          <div class="pd-stat-value" style="font-size:14px;">${name}</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4">
+        <div class="pd-stat-box">
+          <div class="pd-stat-label"><i class="fas fa-calendar mr-1"></i>Period</div>
+          <div class="pd-stat-value" style="font-size:12px;">${formatDate(d.from_date)} → ${formatDate(d.to_date)}</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4">
+        <div class="pd-stat-box">
+          <div class="pd-stat-label"><i class="fas fa-shopping-bag mr-1"></i>Orders Settled</div>
+          <div class="pd-stat-value">${d.orders_paid}</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4">
+        <div class="pd-stat-box">
+          <div class="pd-stat-label"><i class="fas fa-gift mr-1"></i>Incentive Total</div>
+          <div class="pd-stat-value">₹${parseFloat(d.incentive_total).toFixed(2)}</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4">
+        <div class="pd-stat-box">
+          <div class="pd-stat-label"><i class="fas fa-plus-circle mr-1"></i>Fixed Amount</div>
+          <div class="pd-stat-value">₹${parseFloat(d.fixed_amount).toFixed(2)}</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4">
+        <div class="pd-stat-box" style="border-left-color:#28a745;">
+          <div class="pd-stat-label"><i class="fas fa-rupee-sign mr-1"></i>Total Paid</div>
+          <div class="pd-stat-value big">₹${parseFloat(d.total_paid).toFixed(2)}</div>
+        </div>
+      </div>
+    `;
+    card.style.display = 'block';
+    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ── History Table ─────────────────────────────────────────────────────
+  function addToHistory(d, name) {
+    payoutHistory.unshift({ ...d, partner_name: name });
+    renderHistory();
+    setLastUpdated();
+    document.getElementById('footerCount').textContent = payoutHistory.length;
+  }
+
+  
+  function loadHistory() {
+    console.log("loadHistory is running ")
+  fetch("{% url 'walletHistoryAPI' %}")
+    
+    .then(res => res.json())
+    .then(data => {
+        console.log("API Response:", data);
+      if (data.status) {
+        payoutHistory = []; // reset
+
+        data.data.forEach(item => {
+          addToHistory(item, item.partner_name);
+        });
+      }
+    })
+    .catch(err => console.error(err));
+ }
+ document.addEventListener("DOMContentLoaded", function () {
+  loadHistory();
+});
+
+  function renderHistory() {
+    const search = document.getElementById('tableSearch').value.toLowerCase();
+    const filtered = payoutHistory.filter(p =>
+      !search || p.partner_name.toLowerCase().includes(search)
+    );
+    const tbody = document.getElementById('historyTbody');
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7">
+        <div class="vr-empty-state">
+          <i class="fas fa-wallet"></i>
+          <p class="vr-empty-title">No Payouts Yet</p>
+          <small class="vr-empty-subtitle">Payments will appear here after processing.</small>
+        </div></td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = filtered.map((p, i) => `
+      <tr>
+        <td><span class="vr-cell-muted font-weight-bold">${i + 1}</span></td>
+        <td>
+          <div class="vr-cell-text-sm font-weight-bold">${p.partner_name}</div>
+        </td>
+        <td>
+          <span class="pd-period-text">
+            <i class="fas fa-calendar-alt mr-1" style="color:#A82323;font-size:10px;"></i>
+            ${(p.period)}
+          </span>
+        </td>
+        <td>
+          <span class="si-amount-badge">₹${parseFloat(p.incentive_total).toFixed(2)}</span>
+        </td>
+        <td>
+          <span class="vr-cell-text-sm">₹${parseFloat(p.fixed_amount).toFixed(2)}</span>
+        </td>
+        <td>
+          <span class="pd-amount-badge">
+            <i class="fas fa-rupee-sign" style="font-size:9px;"></i>
+            ₹${parseFloat(p.total_paid).toFixed(2)}
+          </span>
+        </td>
+        <td>
+          <span class="si-order-badge">
+            <i class="fas fa-box" style="font-size:10px;"></i>
+            ${p.orders_count}
+          </span>
+        </td>
+      </tr>`).join('');
+  }
+
+  function filterHistory() { renderHistory(); }
+
+  // ── Init ──────────────────────────────────────────────────────────────
+  // Set today's date as default for to_date
+  document.getElementById('to_date').value = new Date().toISOString().split('T')[0];
+</script>
+
+{% include 'footer.html' %}
+{% include 'footer_link.html' %}

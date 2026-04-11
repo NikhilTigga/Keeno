@@ -1,0 +1,736 @@
+{% include 'header.html' %}
+{% include 'navbar.html' %}
+{% include 'sidebar.html' %}
+{% load static %}
+
+<link rel="stylesheet" href="{% static '../static/dist/css/myCustome.css' %}">
+
+<div class="content-wrapper" style="background-image:url('{% static '../static/dist/img/SriKrishnabackgroundimage3.jpg' %}');background-size:cover;">
+
+  <!-- Header -->
+  <div class="content-header mb-3">
+    <div class="container-fluid bg-white p-2 rounded" style="width:99%">
+      <div class="row mb-2">
+        <div class="col-sm-6"><h1 class="m-0">Global Categories</h1></div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="/" class="text-danger">Home</a></li>
+            <li class="breadcrumb-item"><a href="/" class="text-danger">Dashboard</a></li>
+            <li class="breadcrumb-item active">Global Categories</li>
+          </ol>
+        </div>
+      </div><hr>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="row ml-2 mr-2 mt-2" id="summaryCards"></div>
+
+  <!-- Main Row: Table + Create Form -->
+  <div class="row ml-2 mr-2">
+
+    <!-- ── Category Table ───────────────────────── -->
+    <div class="col-lg-8 col-12 mb-4">
+      <div class="card shadow-sm vr-card">
+
+        <div class="card-header vr-card-header">
+          <div class="d-flex flex-wrap justify-content-between align-items-center" style="gap:10px;">
+            <div class="d-flex align-items-center">
+              <div class="vr-header-icon">
+                <i class="fas fa-layer-group text-white" style="font-size:15px;"></i>
+              </div>
+              <div>
+                <p class="vr-header-title mb-0">Global Categories</p>
+                <small class="vr-header-subtitle">Manage all food/item categories</small>
+              </div>
+            </div>
+            <div class="d-flex align-items-center" style="gap:8px;">
+              <div class="vr-search-wrapper">
+                <i class="fas fa-search"></i>
+                <input type="text" id="tableSearch" placeholder="Search..." class="form-control form-control-sm vr-search-input">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table mb-0 vr-table" id="categoryTable">
+              <thead>
+                <tr>
+                  <th style="width:40px;">#</th>
+                  <th>Category</th>
+                  <th>Images</th>
+                  <th>Created On</th>
+                  <th style="width:110px; text-align:center;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="categoryTbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="vr-card-footer">
+          <small class="vr-footer-count">
+            <i class="fas fa-table mr-1" style="color:#A82323;"></i>
+            Showing <strong id="footerCount">0</strong> category(s)
+          </small>
+          <small class="vr-footer-time">
+            <i class="fas fa-sync-alt mr-1"></i>
+            Last updated: <span id="lastUpdated"></span>
+          </small>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Create / Edit Form ────────────────────── -->
+    <div class="col-lg-4 col-12 mb-4">
+      <div class="card shadow-sm vr-card" id="formCard">
+
+        <div class="card-header vr-card-header">
+          <div class="d-flex align-items-center">
+            <div class="vr-header-icon" id="formIcon">
+              <i class="fas fa-plus text-white" style="font-size:15px;"></i>
+            </div>
+            <div>
+              <p class="vr-header-title mb-0" id="formTitle">Create Category</p>
+              <small class="vr-header-subtitle" id="formSubtitle">Add a new global category</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body" style="background:#f9f9f9;">
+
+          <input type="hidden" id="editCategoryId">
+
+          <!-- Category Name -->
+          <div class="form-group mb-3">
+            <label class="gc-label"><i class="fas fa-tag mr-1" style="color:#A82323;"></i>Category Name <span class="text-danger">*</span></label>
+            <input type="text" id="catgname" class="form-control gc-input" placeholder="e.g. Beverages, Snacks...">
+            <div class="invalid-feedback" id="nameError">Category name is required.</div>
+          </div>
+
+          <!-- Image Upload -->
+          <div class="form-group mb-3">
+            <label class="gc-label"><i class="fas fa-images mr-1" style="color:#A82323;"></i>Category Images</label>
+
+            <div class="gc-drop-zone" id="dropZone">
+              <i class="fas fa-cloud-upload-alt gc-drop-icon"></i>
+              <p class="gc-drop-text">Drop images here or <span class="gc-drop-link">browse</span></p>
+              <small class="gc-drop-hint">PNG, JPG, WEBP up to 5MB each</small>
+              <input type="file" id="imageInput" multiple accept="image/*" style="display:none;">
+            </div>
+
+            <!-- Preview Grid -->
+            <div class="gc-img-preview-grid mt-2" id="imgPreviewGrid"></div>
+          </div>
+
+          <!-- Existing images (edit mode) -->
+          <div id="existingImagesSection" style="display:none;" class="mb-3">
+            <label class="gc-label"><i class="fas fa-photo-video mr-1" style="color:#A82323;"></i>Existing Images</label>
+            <div class="gc-img-preview-grid" id="existingImagesGrid"></div>
+          </div>
+
+          <!-- Buttons -->
+          <div class="d-flex" style="gap:8px;">
+            <button class="btn btn-sm gc-btn-submit flex-fill" id="submitBtn" onclick="submitForm()">
+              <i class="fas fa-plus mr-1"></i><span id="submitBtnText">Create Category</span>
+            </button>
+            <button class="btn btn-sm gc-btn-cancel" id="cancelBtn" style="display:none;" onclick="resetForm()">
+              <i class="fas fa-times mr-1"></i>Cancel
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /row -->
+</div><!-- /content-wrapper -->
+
+
+<!-- ── View Detail Modal ──────────────────────────────────────────────────── -->
+<div class="modal fade" id="detailModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-md modal-dialog-centered" role="document">
+    <div class="modal-content vr-modal-content">
+
+      <div class="modal-header vr-modal-header">
+        <div class="d-flex align-items-center">
+          <div class="vr-avatar-sm" id="detailAvatar">C</div>
+          <div>
+            <p class="vr-modal-title mb-0" id="detailName">Category Name</p>
+            <small class="vr-modal-subtitle" id="detailId">ID #—</small>
+          </div>
+        </div>
+        <button type="button" class="close vr-modal-close" data-dismiss="modal"><span>&times;</span></button>
+      </div>
+
+      <div class="modal-body" style="background:#f9f9f9; padding:20px;">
+        <div class="row" id="detailGrid"></div>
+        <div id="detailImagesSection" style="display:none; margin-top:16px;">
+          <p style="font-size:12px;font-weight:700;color:#A82323;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">
+            <i class="fas fa-images mr-1"></i>Category Images
+          </p>
+          <div class="row" id="detailImages"></div>
+        </div>
+      </div>
+
+      <div class="modal-footer vr-modal-footer" style="justify-content:flex-end;">
+        <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal" style="border-radius:6px;font-size:12px;">
+          <i class="fas fa-times mr-1"></i>Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Delete Confirm Modal ───────────────────────────────────────────────── -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+    <div class="modal-content vr-modal-content">
+      <div class="modal-header" style="background:#A82323; border-radius:10px 10px 0 0; padding:14px 18px;">
+        <h6 class="modal-title text-white mb-0"><i class="fas fa-exclamation-triangle mr-2"></i>Delete Category</h6>
+        <button type="button" class="close text-white" data-dismiss="modal" style="opacity:1;"><span>&times;</span></button>
+      </div>
+      <div class="modal-body text-center py-4">
+        <i class="fas fa-trash-alt fa-3x mb-3" style="color:#A82323;"></i>
+        <p style="font-size:13px;color:#555;">Are you sure you want to delete<br><strong id="deleteModalName" style="color:#A82323;"></strong>?</p>
+        <small style="color:#aaa;">This action cannot be undone.</small>
+      </div>
+      <div class="modal-footer" style="justify-content:center; gap:10px; border:none; padding-bottom:16px;">
+        <button class="btn btn-sm btn-secondary" data-dismiss="modal" style="border-radius:6px;font-size:12px;min-width:80px;">Cancel</button>
+        <button class="btn btn-sm" id="confirmDeleteBtn" style="background:#A82323;color:#fff;border-radius:6px;font-size:12px;min-width:80px;">
+          <i class="fas fa-trash-alt mr-1"></i>Delete
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ── Styles ─────────────────────────────────────────────────────────────── -->
+<style>
+  /* ── Form Card ── */
+  .gc-label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .5px; color: #555; margin-bottom: 5px; display: block;
+  }
+  .gc-input {
+    border: 1.5px solid #e8e8e8; border-radius: 8px; font-size: 13px;
+    padding: 8px 12px; transition: border .2s;
+  }
+  .gc-input:focus { border-color: #A82323; box-shadow: 0 0 0 3px rgba(168,35,35,.1); outline: none; }
+  .gc-input.is-invalid { border-color: #dc3545; }
+
+  /* Drop Zone */
+  .gc-drop-zone {
+    border: 2px dashed #ddd; border-radius: 10px; padding: 20px 12px;
+    text-align: center; cursor: pointer; transition: all .2s; background: #fff;
+  }
+  .gc-drop-zone:hover, .gc-drop-zone.dragover { border-color: #A82323; background: rgba(168,35,35,.04); }
+  .gc-drop-icon { font-size: 28px; color: #ccc; margin-bottom: 6px; display: block; }
+  .gc-drop-zone:hover .gc-drop-icon { color: #A82323; }
+  .gc-drop-text { font-size: 12px; color: #777; margin: 0; }
+  .gc-drop-link { color: #A82323; font-weight: 600; cursor: pointer; }
+  .gc-drop-hint { font-size: 10px; color: #aaa; }
+
+  /* Image Preview */
+  .gc-img-preview-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .gc-img-thumb {
+    position: relative; width: 64px; height: 64px;
+    border-radius: 8px; overflow: hidden; border: 2px solid #f0f0f0;
+  }
+  .gc-img-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .gc-img-thumb .gc-remove-img {
+    position: absolute; top: 2px; right: 2px;
+    background: rgba(168,35,35,.85); color: #fff; border: none; border-radius: 50%;
+    width: 18px; height: 18px; font-size: 9px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity .15s;
+  }
+  .gc-img-thumb:hover .gc-remove-img { opacity: 1; }
+
+  /* Buttons */
+  .gc-btn-submit {
+    background: #A82323; color: #fff; border: none; border-radius: 8px;
+    font-size: 12px; font-weight: 600; padding: 8px 16px;
+    transition: background .2s;
+  }
+  .gc-btn-submit:hover { background: #8e1d1d; color: #fff; }
+  .gc-btn-cancel {
+    background: #eee; color: #555; border: none; border-radius: 8px;
+    font-size: 12px; font-weight: 600; padding: 8px 14px;
+    transition: background .2s;
+  }
+  .gc-btn-cancel:hover { background: #ddd; }
+
+  /* Table Action Buttons */
+  .gc-tbl-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: 6px; border: none;
+    font-size: 11px; cursor: pointer; transition: opacity .15s;
+    text-decoration: none;
+  }
+  .gc-tbl-btn:hover { opacity: .8; text-decoration: none; }
+  .gc-tbl-view    { background: #e8f4fd; color: #4e73df; }
+  .gc-tbl-edit    { background: #fff3cd; color: #856404; }
+  .gc-tbl-delete  { background: #fdecea; color: #A82323; }
+
+  /* Image count badge */
+  .gc-img-count {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: #fdecea; color: #A82323; border-radius: 20px;
+    padding: 2px 10px; font-size: 11px; font-weight: 600;
+  }
+
+  /* Detail Modal */
+  .detail-info-card {
+    background: #fff; border: 1px solid #f0f0f0; border-radius: 10px;
+    padding: 12px 14px; margin-bottom: 12px;
+  }
+  .detail-info-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: #aaa; margin-bottom: 3px; }
+  .detail-info-value { font-size: 13px; font-weight: 600; color: #333; word-break: break-word; }
+
+  /* Toast */
+  .gc-toast {
+    position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+    background: #fff; border-left: 4px solid #A82323; border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.15); padding: 12px 18px;
+    display: flex; align-items: center; gap: 10px; min-width: 260px;
+    transform: translateY(80px); opacity: 0; transition: all .3s ease;
+  }
+  .gc-toast.show { transform: translateY(0); opacity: 1; }
+  .gc-toast.success { border-color: #1cc88a; }
+  .gc-toast.error   { border-color: #dc3545; }
+  .gc-toast-icon { font-size: 18px; }
+  .gc-toast.success .gc-toast-icon { color: #1cc88a; }
+  .gc-toast.error   .gc-toast-icon { color: #dc3545; }
+  .gc-toast        .gc-toast-icon { color: #A82323; }
+  .gc-toast-msg { font-size: 13px; font-weight: 600; color: #333; }
+</style>
+
+
+<!-- ── Script ─────────────────────────────────────────────────────────────── -->
+<script>
+  let categories   = [];
+  let newImgFiles  = [];        // FileList staging for new uploads
+  let removedExisting = [];     // URLs of existing images to remove in edit
+
+  // ── Helpers ──────────────────────────────────────────────────────────────
+  function formatDate(iso) {
+    const d = new Date(iso);
+    const m = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    return `${String(d.getDate()).padStart(2,'0')} ${m[d.getMonth()]} ${d.getFullYear()}`;
+  }
+  function formatTime(iso) {
+    const d = new Date(iso);
+    let h = d.getHours(), min = d.getMinutes(), ap = h>=12?'PM':'AM';
+    h = h%12||12;
+    return `${String(h).padStart(2,'0')}:${String(min).padStart(2,'0')} ${ap}`;
+  }
+
+  function showToast(msg, type='info') {
+    const t = document.getElementById('gcToast');
+    const icons = { success:'fa-check-circle', error:'fa-exclamation-circle', info:'fa-info-circle' };
+    t.className = `gc-toast ${type}`;
+    t.querySelector('.gc-toast-icon').className = `fas ${icons[type]||icons.info} gc-toast-icon`;
+    t.querySelector('.gc-toast-msg').textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // ── Summary Cards ─────────────────────────────────────────────────────────
+  function renderSummaryCards() {
+    const total    = categories.length;
+    const withImgs = categories.filter(c => c.images && c.images.length > 0).length;
+    const noImgs   = total - withImgs;
+    const today    = categories.filter(c => {
+      const d = new Date(c.created_at); const n = new Date();
+      return d.toDateString() === n.toDateString();
+    }).length;
+
+    document.getElementById('summaryCards').innerHTML = `
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card_ border-left-primary shadow h-100 py-2 bg-white">
+          <div class="card-body">
+            <div class="row no-gutters align-items-center">
+              <div class="col mr-2">
+                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Categories</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">${total}</div>
+              </div>
+              <div class="col-auto"><i class="fas fa-layer-group fa-2x text-primary"></i></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card_ border-left-success shadow h-100 py-2 bg-white">
+          <div class="card-body">
+            <div class="row no-gutters align-items-center">
+              <div class="col mr-2">
+                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">With Images</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">${withImgs}</div>
+              </div>
+              <div class="col-auto"><i class="fas fa-images fa-2x text-success"></i></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card_ shadow h-100 py-2 bg-white" style="border-left:5px solid #f6c23e;border-radius:8px;">
+          <div class="card-body">
+            <div class="row no-gutters align-items-center">
+              <div class="col mr-2">
+                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">No Images</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">${noImgs}</div>
+              </div>
+              <div class="col-auto"><i class="fas fa-image fa-2x text-warning"></i></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card_ shadow h-100 py-2 bg-white" style="border-left:5px solid #A82323;border-radius:8px;">
+          <div class="card-body">
+            <div class="row no-gutters align-items-center">
+              <div class="col mr-2">
+                <div class="text-xs font-weight-bold text-uppercase mb-1" style="color:#A82323;">Added Today</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">${today}</div>
+              </div>
+              <div class="col-auto"><i class="fas fa-calendar-day fa-2x" style="color:#A82323;"></i></div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  // ── Render Table ──────────────────────────────────────────────────────────
+  function renderTable(search = '') {
+    const tbody = document.getElementById('categoryTbody');
+    const filtered = categories.filter(c =>
+      !search || c.catgname.toLowerCase().includes(search.toLowerCase())
+    );
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5">
+        <div class="vr-empty-state">
+          <i class="fas fa-layer-group"></i>
+          <p class="vr-empty-title">No Categories Found</p>
+          <small class="vr-empty-subtitle">Create your first global category using the form.</small>
+        </div></td></tr>`;
+      document.getElementById('footerCount').textContent = 0;
+      return;
+    }
+
+    tbody.innerHTML = filtered.map((c, i) => `
+      <tr>
+        <td><span class="vr-cell-muted font-weight-bold">${i+1}</span></td>
+        <td>
+          <div class="d-flex align-items-center">
+            <div class="vr-avatar">${c.catgname[0].toUpperCase()}</div>
+            <div>
+              <div class="vr-rest-name">${c.catgname}</div>
+              <small class="vr-rest-id">ID #${c.id}</small>
+            </div>
+          </div>
+        </td>
+        <td>
+          ${c.images && c.images.length > 0
+            ? `<span class="gc-img-count"><i class="fas fa-images" style="font-size:10px;"></i>${c.images.length} image${c.images.length>1?'s':''}</span>`
+            : `<span style="font-size:11px;color:#bbb;"><i class="fas fa-minus mr-1"></i>None</span>`}
+        </td>
+        <td>
+          <div class="vr-cell-text-sm"><i class="fas fa-calendar-alt mr-1" style="color:#A82323;font-size:10px;"></i>${formatDate(c.created_at)}</div>
+          <small class="vr-cell-time">${formatTime(c.created_at)}</small>
+        </td>
+        <td>
+          <div class="d-flex align-items-center justify-content-center" style="gap:5px;">
+            <a href="#" class="gc-tbl-btn gc-tbl-view view-cat-btn" data-id="${c.id}" title="View"><i class="fas fa-eye"></i></a>
+            <a href="#" class="gc-tbl-btn gc-tbl-edit edit-cat-btn" data-id="${c.id}" title="Edit"><i class="fas fa-pen"></i></a>
+            <a href="#" class="gc-tbl-btn gc-tbl-delete delete-cat-btn" data-id="${c.id}" title="Delete"><i class="fas fa-trash"></i></a>
+          </div>
+        </td>
+      </tr>`).join('');
+
+    document.getElementById('footerCount').textContent = filtered.length;
+  }
+
+  // ── Image Preview (new uploads) ───────────────────────────────────────────
+  function renderNewPreviews() {
+    const grid = document.getElementById('imgPreviewGrid');
+    grid.innerHTML = newImgFiles.map((f, i) => {
+      const url = URL.createObjectURL(f);
+      return `<div class="gc-img-thumb" data-idx="${i}">
+        <img src="${url}" alt="">
+        <button class="gc-remove-img remove-new-img" data-idx="${i}" type="button"><i class="fas fa-times"></i></button>
+      </div>`;
+    }).join('');
+  }
+
+  function renderExistingPreviews(images) {
+    const grid = document.getElementById('existingImagesGrid');
+    grid.innerHTML = images
+      .filter(url => !removedExisting.includes(url))
+      .map(url => `<div class="gc-img-thumb">
+        <img src="${url}" alt="">
+        <button class="gc-remove-img remove-existing-img" data-url="${url}" type="button"><i class="fas fa-times"></i></button>
+      </div>`).join('');
+  }
+
+  // ── Drop Zone Setup ───────────────────────────────────────────────────────
+  const dropZone   = document.getElementById('dropZone');
+  const imageInput = document.getElementById('imageInput');
+
+  dropZone.addEventListener('click', () => imageInput.click());
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault(); dropZone.classList.remove('dragover');
+    [...e.dataTransfer.files].forEach(f => { if(f.type.startsWith('image/')) newImgFiles.push(f); });
+    renderNewPreviews();
+  });
+  imageInput.addEventListener('change', () => {
+    [...imageInput.files].forEach(f => newImgFiles.push(f));
+    renderNewPreviews();
+    imageInput.value = '';
+  });
+
+  // ── Event Delegation ──────────────────────────────────────────────────────
+  document.addEventListener('click', function(e) {
+
+    // Remove new image
+    const rNew = e.target.closest('.remove-new-img');
+    if (rNew) { e.preventDefault(); newImgFiles.splice(parseInt(rNew.dataset.idx), 1); renderNewPreviews(); return; }
+
+    // Remove existing image
+    const rExist = e.target.closest('.remove-existing-img');
+    if (rExist) {
+      e.preventDefault();
+      removedExisting.push(rExist.dataset.url);
+      const editId = document.getElementById('editCategoryId').value;
+      const cat = categories.find(c => c.id == editId);
+      if (cat) renderExistingPreviews(cat.images || []);
+      return;
+    }
+
+    // View
+    const vBtn = e.target.closest('.view-cat-btn');
+    if (vBtn) { e.preventDefault(); openDetailModal(parseInt(vBtn.dataset.id)); return; }
+
+    // Edit
+    const eBtn = e.target.closest('.edit-cat-btn');
+    if (eBtn) { e.preventDefault(); openEditForm(parseInt(eBtn.dataset.id)); return; }
+
+    // Delete
+    const dBtn = e.target.closest('.delete-cat-btn');
+    if (dBtn) {
+      e.preventDefault();
+      const cat = categories.find(c => c.id === parseInt(dBtn.dataset.id));
+      if (!cat) return;
+      document.getElementById('deleteModalName').textContent = cat.catgname;
+      document.getElementById('confirmDeleteBtn').dataset.id = cat.id;
+      $('#deleteModal').modal('show');
+      return;
+    }
+  });
+
+  // Confirm Delete
+  document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+    const id = parseInt(this.dataset.id);
+    fetch("{% url 'delete_global_category' %}", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    })
+    .then(r => r.json())
+    .then(data => {
+      $('#deleteModal').modal('hide');
+      if (data.status) {
+        categories = categories.filter(c => c.id !== id);
+        renderSummaryCards();
+        renderTable(document.getElementById('tableSearch').value);
+        showToast('Category deleted successfully.', 'success');
+      } else {
+        showToast(data.message || 'Delete failed.', 'error');
+      }
+    })
+    .catch(() => showToast('Server error.', 'error'));
+  });
+
+  // ── Open Detail Modal ─────────────────────────────────────────────────────
+  function openDetailModal(id) {
+    const c = categories.find(x => x.id === id);
+    if (!c) return;
+    document.getElementById('detailAvatar').textContent = c.catgname[0].toUpperCase();
+    document.getElementById('detailName').textContent   = c.catgname;
+    document.getElementById('detailId').textContent     = `ID #${c.id}`;
+
+    document.getElementById('detailGrid').innerHTML = `
+      <div class="col-12">
+        <div class="detail-info-card">
+          <div class="detail-info-label">Category Name</div>
+          <div class="detail-info-value"><i class="fas fa-tag detail-info-icon" style="color:#A82323;"></i>${c.catgname}</div>
+        </div>
+      </div>
+      <div class="col-12">
+        <div class="detail-info-card">
+          <div class="detail-info-label">Created On</div>
+          <div class="detail-info-value"><i class="fas fa-calendar-alt detail-info-icon" style="color:#A82323;"></i>${formatDate(c.created_at)} at ${formatTime(c.created_at)}</div>
+        </div>
+      </div>
+      <div class="col-12">
+        <div class="detail-info-card">
+          <div class="detail-info-label">Images</div>
+          <div class="detail-info-value"><i class="fas fa-images detail-info-icon" style="color:#A82323;"></i>${c.images ? c.images.length : 0} image(s)</div>
+        </div>
+      </div>`;
+
+    if (c.images && c.images.length > 0) {
+      document.getElementById('detailImagesSection').style.display = 'block';
+      document.getElementById('detailImages').innerHTML = c.images.map(img => `
+        <div class="col-4 mb-3">
+          <div class="vr-img-card"><img src="${img}" alt="Category Image" style="border-radius:8px;width:100%;height:80px;object-fit:cover;"></div>
+        </div>`).join('');
+    } else {
+      document.getElementById('detailImagesSection').style.display = 'none';
+    }
+    $('#detailModal').modal('show');
+  }
+
+  // ── Open Edit Form ────────────────────────────────────────────────────────
+  function openEditForm(id) {
+    const c = categories.find(x => x.id === id);
+    if (!c) return;
+
+    document.getElementById('editCategoryId').value = c.id;
+    document.getElementById('catgname').value = c.catgname;
+    newImgFiles = [];
+    removedExisting = [];
+    renderNewPreviews();
+
+    // Show existing images
+    if (c.images && c.images.length > 0) {
+      document.getElementById('existingImagesSection').style.display = 'block';
+      renderExistingPreviews(c.images);
+    } else {
+      document.getElementById('existingImagesSection').style.display = 'none';
+    }
+
+    // Update form UI to "edit mode"
+    document.getElementById('formTitle').textContent   = 'Edit Category';
+    document.getElementById('formSubtitle').textContent = `Editing: ${c.catgname}`;
+    document.getElementById('formIcon').innerHTML = '<i class="fas fa-pen text-white" style="font-size:15px;"></i>';
+    document.getElementById('submitBtnText').textContent = 'Update Category';
+    document.getElementById('submitBtn').querySelector('i').className = 'fas fa-save mr-1';
+    document.getElementById('cancelBtn').style.display = '';
+
+    // Scroll to form
+    document.getElementById('formCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ── Reset Form ────────────────────────────────────────────────────────────
+  function resetForm() {
+    document.getElementById('editCategoryId').value = '';
+    document.getElementById('catgname').value = '';
+    document.getElementById('catgname').classList.remove('is-invalid');
+    newImgFiles = [];
+    removedExisting = [];
+    renderNewPreviews();
+    document.getElementById('existingImagesSection').style.display = 'none';
+    document.getElementById('imgPreviewGrid').innerHTML = '';
+
+    document.getElementById('formTitle').textContent   = 'Create Category';
+    document.getElementById('formSubtitle').textContent = 'Add a new global category';
+    document.getElementById('formIcon').innerHTML = '<i class="fas fa-plus text-white" style="font-size:15px;"></i>';
+    document.getElementById('submitBtnText').textContent = 'Create Category';
+    document.getElementById('submitBtn').querySelector('i').className = 'fas fa-plus mr-1';
+    document.getElementById('cancelBtn').style.display = 'none';
+  }
+
+  // ── Submit Form (Create / Update) ─────────────────────────────────────────
+  function submitForm() {
+    const name   = document.getElementById('catgname').value.trim();
+    const editId = document.getElementById('editCategoryId').value;
+
+    if (!name) {
+      document.getElementById('catgname').classList.add('is-invalid');
+      return;
+    }
+    document.getElementById('catgname').classList.remove('is-invalid');
+
+    const fd = new FormData();
+    fd.append('catgname', name);
+    if (editId) {
+      fd.append('id', editId);
+      removedExisting.forEach(url => fd.append('remove_images[]', url));
+    }
+    newImgFiles.forEach(f => fd.append('images', f));
+
+    const url = editId
+      ? "{% url 'update_global_category' %}"
+      : "{% url 'create_global_category' %}";
+
+    fetch(url, { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(data => {
+      if (data.status) {
+        if (editId) {
+          const idx = categories.findIndex(c => c.id == editId);
+          if (idx !== -1) categories[idx] = data.category;
+        } else {
+          categories.unshift(data.category);
+        }
+        renderSummaryCards();
+        renderTable(document.getElementById('tableSearch').value);
+        resetForm();
+        showToast(editId ? 'Category updated!' : 'Category created!', 'success');
+      } else {
+        showToast(data.message || 'Operation failed.', 'error');
+      }
+    })
+    .catch(() => showToast('Server error.', 'error'));
+  }
+
+  // ── Search ────────────────────────────────────────────────────────────────
+  document.getElementById('tableSearch').addEventListener('keyup', function() {
+    renderTable(this.value);
+  });
+
+  // ── Last Updated ──────────────────────────────────────────────────────────
+  function setLastUpdated() {
+    const now = new Date();
+    const m = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    let h = now.getHours(), min = now.getMinutes(), ap = h>=12?'PM':'AM';
+    h = h%12||12;
+    document.getElementById('lastUpdated').textContent =
+      `${String(now.getDate()).padStart(2,'0')} ${m[now.getMonth()]} ${now.getFullYear()}, ${String(h).padStart(2,'0')}:${String(min).padStart(2,'0')} ${ap}`;
+  }
+
+  // ── Load Data ─────────────────────────────────────────────────────────────
+  function loadCategories() {
+    fetch("{% url 'list_global_categories' %}", {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.status) {
+        categories = data.categories;
+        renderSummaryCards();
+        renderTable();
+        setLastUpdated();
+      }
+    })
+    .catch(err => console.error('Error loading categories:', err));
+  }
+
+  loadCategories();
+</script>
+
+<!-- Toast -->
+<div class="gc-toast" id="gcToast">
+  <i class="fas fa-check-circle gc-toast-icon"></i>
+  <span class="gc-toast-msg"></span>
+</div>
+
+{% include 'footer.html' %}
+{% include 'footer_link.html' %}
