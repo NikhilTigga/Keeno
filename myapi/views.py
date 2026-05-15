@@ -21,7 +21,7 @@ from django.db.models import Count
 from django.db.models.functions import TruncMonth
 from django.db.models import Q
 from django.utils.dateparse import parse_datetime
-from django.core.files.storage import FileSystemStorage
+from django.core.files.storage import FileSystemStorage 
 @method_decorator(csrf_exempt, name='dispatch')
 class UserRegisterView(View):
     def post(self,request):
@@ -368,7 +368,7 @@ class RestaurantByCategoryView(View):
             filter_type = request.POST.get("filter_type", "all")  # all / high_rated / open_now
             veg_filter = request.POST.get("veg", "all")  # all / veg
 
-            # ✅ Get user
+            #  Get user
             user = UserRegister.objects.get(id=user_id)
 
             if not user.latitude or not user.longitude:
@@ -380,18 +380,18 @@ class RestaurantByCategoryView(View):
             user_lat = user.latitude
             user_lon = user.longitude
 
-            # ✅ Base queryset
+            #  Base queryset
             restaurants = Restaurant.objects.filter(
                 menu_items__globalCategory_id=global_category_id
             ).distinct()
 
-            # ✅ Search filter
+            #  Search filter
             if search:
                 restaurants = restaurants.filter(
                     restaurantname__icontains=search
                 )
 
-            # ✅ Veg filter
+            #  Veg filter
             if veg_filter == "veg":
                 restaurants = restaurants.filter(
                     menu_items__VegNonVeg="Veg"
@@ -404,7 +404,7 @@ class RestaurantByCategoryView(View):
                 if not restaurant.latitude or not restaurant.longitude:
                     continue
 
-                # ✅ Distance
+                #  Distance
                 distance = calculate_distance(
                     user_lat,
                     user_lon,
@@ -415,12 +415,12 @@ class RestaurantByCategoryView(View):
                 if distance > 20:
                     continue
 
-                # ✅ Rating
+                #  Rating
                 rating = RestaurantRating.objects.filter(
                     restaurant=restaurant
                 ).aggregate(avg_rating=Avg("rating"))["avg_rating"] or 0
 
-                # ✅ Delivery Time
+                #  Delivery Time
                 time_minutes = int((distance / 40) * 60)
 
                 data = {
@@ -433,13 +433,13 @@ class RestaurantByCategoryView(View):
                     "delivery_time_minutes": time_minutes
                 }
 
-                # ✅ Open Now filter
+                #  Open Now filter
                 if filter_type == "open_now" and not restaurant.is_open:
                     continue
 
                 response_data.append(data)
 
-            # ✅ Sorting
+            #  Sorting
             if filter_type == "high_rated":
                 response_data.sort(key=lambda x: x["rating"], reverse=True)
             else:
@@ -2762,9 +2762,9 @@ class DeliveryPartnerLoginAPI(View):
                     "message": "Email and Password are required"
                 }, status=400)
 
-            try:
-                partner = DeliveryPartnerForm.objects.filter(email=email).first()
-            except DeliveryPartnerForm.DoesNotExist:
+            
+            partner = DeliveryPartnerForm.objects.filter(email=email).first()
+            if not partner:
                 return JsonResponse({
                     "status": False,
                     "message": "Invalid email"
@@ -5812,7 +5812,7 @@ class AddUpdateDeliveryPartnerRating(View):
         partner_id = request.POST.get("delivery_partner_id")
         rating = request.POST.get("rating")
 
-        # ✅ Validation
+        #  Validation
         if not user_id or not partner_id or not rating:
             return JsonResponse({
                 "status": False,
@@ -6007,7 +6007,7 @@ class AddMoneyToWalletView(View):
             amount = request.POST.get("amount")
             payment_method = request.POST.get("payment_method")
 
-            # ✅ Validation
+            #  Validation
             if not user_id or not amount or not payment_method:
                 return JsonResponse({
                     "status": False,
@@ -6030,13 +6030,13 @@ class AddMoneyToWalletView(View):
                     "message": "Invalid payment method"
                 }, status=400)
 
-            # ✅ Get User
+            #  Get User
             user = UserRegister.objects.get(id=user_id)
 
-            # ✅ Get or Create Wallet
+            #  Get or Create Wallet
             wallet, created = UserWallet.objects.get_or_create(user=user)
 
-            # ✅ Create Transaction (initially pending)
+            #  Create Transaction (initially pending)
             transaction = UserWalletTransaction.objects.create(
                 wallet=wallet,
                 amount=amount,
@@ -6046,11 +6046,11 @@ class AddMoneyToWalletView(View):
                 done_by='user'
             )
 
-            # 🔥 Simulate Payment Success (replace with real gateway later)
+            #  Simulate Payment Success (replace with real gateway later)
             transaction.status = 'success'
             transaction.save()
 
-            # ✅ Update Wallet Balance ONLY if success
+            #  Update Wallet Balance ONLY if success
             if transaction.status == 'success':
                 wallet.balance += amount
                 wallet.save()
@@ -6089,13 +6089,13 @@ class WalletDetailsView(View):
                     "message": "user_id is required"
                 }, status=400)
 
-            # ✅ Get User
+            #  Get User
             user = UserRegister.objects.get(id=user_id)
 
-            # ✅ Get or Create Wallet
+            #  Get or Create Wallet
             wallet, created = UserWallet.objects.get_or_create(user=user)
 
-            # ✅ Get Transactions (latest first)
+            #  Get Transactions (latest first)
             transactions = UserWalletTransaction.objects.filter(
                 wallet=wallet
             ).order_by("-created_at")
@@ -6135,21 +6135,41 @@ class WalletDetailsView(View):
             
 @method_decorator(csrf_exempt, name='dispatch')
 class RestaurantList(View):
-    def get(self , request):
+    def post(self , request):
+        
+        userid = request.POST.get('userid')
         restaurants = Restaurant.objects.filter(is_active=True, approveStatus="approved")
+        user = UserRegister.objects.get(id=userid)
+        
+        user_lat = user.latitude
+        user_lon = user.longitude
+        
+        response_data = []
 
-        result = []
         for restaurant in restaurants:
-            result.append({
+
+            #  Skip invalid location
+            if not restaurant.latitude or not restaurant.longitude:
+                continue
+            #  Distance
+            distance = calculate_distance(
+                user_lat,
+                user_lon,
+                restaurant.latitude,
+                restaurant.longitude
+            )
+            if distance > 20:
+                continue
+            data = {
                 "id": restaurant.id,
                 "name": restaurant.restaurantname,
-               
-            })
+            }
 
+            response_data.append(data)
         return JsonResponse({
             "status": True,
-            "total_restaurants": len(result),
-            "restaurants": result
+            "total_restaurants": len(response_data),
+            "restaurants":  response_data
         })
         
         
@@ -6160,26 +6180,30 @@ class RestaurantPartyBookingView(View):
         try:
             restaurant_id = request.POST.get("restaurantid")
             user_id = request.POST.get("user_id")
+            partytype = request.POST.get("partytype")
+            partydatetime = request.POST.get('partydate')
             name = request.POST.get("name")
             mobileno = request.POST.get("mobileno")
             order_details = request.POST.get("order_details")
             deliveryaddress = request.POST.get("deliveryaddress")
 
-            # ✅ Validation
+            #  Validation
             if not all([restaurant_id, user_id, name, mobileno, order_details, deliveryaddress]):
                 return JsonResponse({
                     "status": "error",
                     "message": "All fields are required"
                 }, status=400)
 
-            # ✅ Fetch related objects
+            #  Fetch related objects
             restaurant = get_object_or_404(Restaurant, id=restaurant_id)
             user = get_object_or_404(UserRegister, id=user_id)
 
-            # ✅ Create booking
+            #  Create booking
             booking = RestaurantPartyBooking.objects.create(
                 restaurant=restaurant,
                 user=user,
+                partytype=partytype,
+                partydatetime=partydatetime,
                 name=name,
                 Mobileno=mobileno,
                 order_details=order_details,
@@ -6218,14 +6242,14 @@ class EditUserProfileView(View):
 
             user = UserRegister.objects.get(id=user_id)
 
-            # ✅ Get fields (optional update)
+            #  Get fields (optional update)
             name = request.POST.get("name")
             email = request.POST.get("email")
             phone_no = request.POST.get("phone_no")
             latitude = request.POST.get("latitude")
             longitude = request.POST.get("longitude")
 
-            # ✅ Update only if provided
+            #  Update only if provided
             if name:
                 user.name = name
 
@@ -6289,10 +6313,10 @@ class UserWishlistView(View):
                     "message": "user_id is required"
                 }, status=400)
 
-            # ✅ Get user
+            #  Get user
             user = UserRegister.objects.get(id=user_id)
 
-            # ✅ Get wishlist items
+            #  Get wishlist items
             wishlist_items = Wishlist.objects.select_related(
                 "menu_item__restaurant"
             ).filter(user=user)
@@ -6303,16 +6327,16 @@ class UserWishlistView(View):
                 item = wish.menu_item
                 restaurant = item.restaurant
 
-                # ✅ Skip invalid restaurant
+                #  Skip invalid restaurant
                 if not restaurant.is_active or restaurant.approveStatus != "approved":
                     continue
 
-                # ✅ Rating
+                #  Rating
                 rating = RestaurantRating.objects.filter(
                     restaurant=restaurant
                 ).aggregate(avg=Avg("rating"))["avg"] or 0
 
-                # ✅ Addons
+                #  Addons
                 has_addons = item.addons.filter(is_available=True).exists()
 
                 data = {
@@ -6360,3 +6384,33 @@ class UserWishlistView(View):
                 "status": False,
                 "message": str(e)
             }, status=500)
+            
+            
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+
+class BannerListAPI(View):
+    
+    def get(self , request):
+        
+       banners = Banner.objects.filter(is_active=True).order_by("-created_at")
+       
+       bannerslist = [{
+           "id":b.id,
+           "titel": b.title,
+           "images":b.images
+           
+        } for b in banners]
+       
+       return JsonResponse({
+           "status":True,
+           "bannerslist":bannerslist
+           
+       })
+       
+            
+            
+
+    
+            

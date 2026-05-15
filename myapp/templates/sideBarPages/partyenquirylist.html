@@ -1,0 +1,572 @@
+{% include 'header.html' %}
+{% include 'navbar.html' %}
+{% include 'sidebar.html' %}
+{% load static %}
+
+<link rel="stylesheet" href="{% static '../static/dist/css/myCustome.css' %}">
+
+<div class="content-wrapper" style="background-image:url('{% static '../static/dist/img/SriKrishnabackgroundimage3.jpg' %}');background-size:cover;">
+
+  <!-- Header -->
+  <div class="content-header mb-3">
+    <div class="container-fluid bg-white p-2 rounded" style="width:99%">
+      <div class="row mb-2">
+        <div class="col-sm-6"><h1 class="m-0">Party Bookings</h1></div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="/" class="text-danger">Home</a></li>
+            <li class="breadcrumb-item"><a href="/" class="text-danger">Dashboard</a></li>
+            <li class="breadcrumb-item active">Party Bookings</li>
+          </ol>
+        </div>
+      </div><hr>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="row ml-2 mr-2 mt-2" id="summaryCards"></div>
+
+  <!-- Bookings Table -->
+  <div class="row ml-2 mr-2">
+    <div class="col-12">
+      <div class="card shadow-sm vr-card">
+
+        <!-- Card Header -->
+        <div class="card-header vr-card-header">
+          <div class="d-flex flex-wrap justify-content-between align-items-center" style="gap:10px;">
+            <div class="d-flex align-items-center">
+              <div class="vr-header-icon">
+                <i class="fas fa-glass-cheers text-white" style="font-size:15px;"></i>
+              </div>
+              <div>
+                <p class="vr-header-title mb-0">Restaurant Party Booking Requests</p>
+                <small class="vr-header-subtitle">Review and manage party booking enquiries</small>
+              </div>
+            </div>
+            <div class="d-flex align-items-center flex-wrap" style="gap:8px;">
+              <div class="vr-search-wrapper">
+                <i class="fas fa-search"></i>
+                <input type="text" id="tableSearch" placeholder="Search..." class="form-control form-control-sm vr-search-input">
+              </div>
+              <div class="btn-group" role="group">
+                <a href="#" class="vr-btn-filter vr-filter-btn active-all" data-filter="all"><i class="fas fa-list mr-1"></i>All</a>
+                <a href="#" class="vr-btn-filter vr-filter-btn" data-filter="pending"><i class="fas fa-hourglass-half mr-1"></i>Pending</a>
+                <a href="#" class="vr-btn-filter vr-filter-btn" data-filter="approved"><i class="fas fa-check mr-1"></i>Approved</a>
+                <a href="#" class="vr-btn-filter vr-filter-btn" data-filter="completed"><i class="fas fa-flag-checkered mr-1"></i>Completed</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table mb-0 vr-table" id="bookingTable">
+              <thead>
+                <tr>
+                  <th style="width:40px;">#</th>
+                  <th>Customer</th>
+                  <th>Restaurant</th>
+                  <th>Party Type</th>
+                  <th>Mobile</th>
+                  <th>Approve Status</th>
+                  <th>Enquiry Status</th>
+                  <th>Booked On</th>
+                  <th style="width:130px; text-align:center;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="bookingTbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="vr-card-footer">
+          <small class="vr-footer-count">
+            <i class="fas fa-table mr-1" style="color:#A82323;"></i>
+            Showing <strong id="footerCount">0</strong> booking(s)
+          </small>
+          <small class="vr-footer-time">
+            <i class="fas fa-sync-alt mr-1"></i>
+            Last updated: <span id="lastUpdated"></span>
+          </small>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── View Details Modal ───────────────────────────────────────────────────── -->
+<div class="modal fade" id="detailModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+    <div class="modal-content vr-modal-content">
+
+      <div class="modal-header vr-modal-header">
+        <div class="d-flex align-items-center">
+          <div class="vr-avatar-sm pb-avatar-sm" id="detailAvatar">P</div>
+          <div>
+            <p class="vr-modal-title mb-0" id="detailName">Customer Name</p>
+            <small class="vr-modal-subtitle" id="detailId">Booking #—</small>
+          </div>
+        </div>
+        <button type="button" class="close vr-modal-close" data-dismiss="modal"><span>&times;</span></button>
+      </div>
+
+      <div class="modal-body" style="background:#f9f9f9; padding:20px;">
+
+        <!-- Tabs -->
+        <ul class="nav nav-tabs pb-tabs mb-3" id="detailTabs">
+          <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#tabCustomer"><i class="fas fa-user mr-1"></i>Customer</a></li>
+          <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tabParty"><i class="fas fa-glass-cheers mr-1"></i>Party Info</a></li>
+          <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tabOrder"><i class="fas fa-clipboard-list mr-1"></i>Order Details</a></li>
+        </ul>
+
+        <div class="tab-content" id="detailTabContent">
+
+          <!-- Customer Tab -->
+          <div class="tab-pane fade show active" id="tabCustomer">
+            <div class="row" id="gridCustomer"></div>
+          </div>
+
+          <!-- Party Info Tab -->
+          <div class="tab-pane fade" id="tabParty">
+            <div class="row" id="gridParty"></div>
+          </div>
+
+          <!-- Order Details Tab -->
+          <div class="tab-pane fade" id="tabOrder">
+            <div class="row" id="gridOrder"></div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="modal-footer vr-modal-footer" style="justify-content:space-between; align-items:center;">
+        <div id="detailStatusBadges" class="d-flex" style="gap:8px;"></div>
+        <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal" style="border-radius:6px;font-size:12px;">
+          <i class="fas fa-times mr-1"></i>Close
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ─── Styles ───────────────────────────────────────────────────────────────── -->
+<style>
+  .detail-info-card {
+    background: #fff;
+    border: 1px solid #f0f0f0;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+  }
+  .detail-info-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #aaa;
+    margin-bottom: 3px;
+  }
+  .detail-info-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    word-break: break-word;
+  }
+  .detail-info-icon {
+    font-size: 11px;
+    margin-right: 5px;
+  }
+  .detail-info-full {
+    background: #fff;
+    border: 1px solid #f0f0f0;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+  }
+  .detail-info-full .detail-info-value {
+    white-space: pre-wrap;
+    line-height: 1.6;
+  }
+
+  /* Party booking avatar accent */
+  .pb-avatar-sm {
+    background: linear-gradient(135deg, #A82323, #c0392b) !important;
+  }
+
+  /* Tabs */
+  .pb-tabs .nav-link {
+    font-size: 12px;
+    font-weight: 600;
+    color: #555;
+    border-radius: 6px 6px 0 0;
+    padding: 7px 14px;
+  }
+  .pb-tabs .nav-link.active {
+    color: #A82323;
+    border-color: #dee2e6 #dee2e6 #fff;
+    font-weight: 700;
+  }
+
+  /* Party type badge */
+  .pb-party-badge {
+    display: inline-block;
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffc107;
+    border-radius: 20px;
+    padding: 2px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: capitalize;
+  }
+  .pb-party-badge.biryaniparty { background:#fff3e0; color:#e65100; border-color:#ff9800; }
+  .pb-party-badge.birthdayparty { background:#fce4ec; color:#880e4f; border-color:#e91e63; }
+  .pb-party-badge.hostalparty { background:#e8f5e9; color:#1b5e20; border-color:#4caf50; }
+
+  /* Enquiry status badge */
+  .pb-badge-completed {
+    display:inline-flex; align-items:center; gap:4px;
+    background:#d4edda; color:#155724;
+    border:1px solid #c3e6cb;
+    border-radius:20px; padding:2px 10px;
+    font-size:11px; font-weight:600;
+  }
+</style>
+
+<!-- ─── Scripts ──────────────────────────────────────────────────────────────── -->
+<script>
+  let bookings = [];
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  function formatDate(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    return `${String(d.getDate()).padStart(2,'0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  }
+  function formatTime(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    let h = d.getHours(), m = d.getMinutes(), ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')} ${ampm}`;
+  }
+
+  function approveBadgeHTML(status) {
+    if (status === 'approved') return `<span class="vr-badge vr-badge-approved"><i class="fas fa-check-circle" style="font-size:10px;"></i> Approved</span>`;
+    return `<span class="vr-badge vr-badge-pending"><i class="fas fa-hourglass-half" style="font-size:10px;"></i> Pending</span>`;
+  }
+  function enquiryBadgeHTML(status) {
+    if (status === 'completed') return `<span class="pb-badge-completed"><i class="fas fa-flag-checkered" style="font-size:10px;"></i> Completed</span>`;
+    return `<span class="vr-badge vr-badge-pending"><i class="fas fa-hourglass-half" style="font-size:10px;"></i> Pending</span>`;
+  }
+
+  function partyIcon(type) {
+    const map = { biryaniparty: 'fa-drumstick-bite', birthdayparty: 'fa-birthday-cake', hostalparty: 'fa-home' };
+    return map[type] || 'fa-glass-cheers';
+  }
+  function partyLabel(type) {
+    const map = { biryaniparty: 'Biryani Party', birthdayparty: 'Birthday Party', hostalparty: 'Hostal Party' };
+    return map[type] || type || '—';
+  }
+
+  function actionHTML(b) {
+    const viewBtn = `<a href="#" class="vr-btn vr-btn-view view-detail-btn" data-id="${b.id}" title="View Details"><i class="fas fa-eye"></i></a>`;
+    let approveBtn = '';
+    if (b.approvestatus === 'pending') {
+      approveBtn = `<a href="#" class="vr-btn vr-btn-approve action-btn" data-id="${b.id}" data-action="approve" data-confirm="Approve this booking?" title="Approve"><i class="fas fa-check"></i></a>`;
+    } else {
+      approveBtn = `<a href="#" class="vr-btn vr-btn-revoke action-btn" data-id="${b.id}" data-action="revoke_approve" data-confirm="Revoke approval?" title="Revoke Approval"><i class="fas fa-ban"></i></a>`;
+    }
+    let enquiryBtn = '';
+    {% comment %} if (b.enquirystatus === 'pending') {
+      enquiryBtn = `<a href="#" class="vr-btn vr-btn-reapprove action-btn" data-id="${b.id}" data-action="complete_enquiry" data-confirm="Mark enquiry as completed?" title="Complete Enquiry"><i class="fas fa-flag-checkered"></i></a>`;
+    } {% endcomment %}
+    return `<div class="d-flex align-items-center justify-content-center" style="gap:5px;">${viewBtn}${approveBtn}${enquiryBtn}</div>`;
+  }
+
+  // ── Detail Modal ───────────────────────────────────────────────────────────
+  function infoCard(label, value, icon, color, fullWidth = false) {
+    const colClass = fullWidth ? 'col-12' : 'col-md-6 col-12';
+    return `
+      <div class="${colClass}">
+        <div class="detail-info-card">
+          <div class="detail-info-label">${label}</div>
+          <div class="detail-info-value">
+            <i class="fas ${icon} detail-info-icon" style="color:${color};"></i>${value || '—'}
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function openDetailModal(id) {
+    const b = bookings.find(x => x.id === id);
+    if (!b) return;
+
+    document.getElementById('detailAvatar').textContent = (b.name || 'P')[0].toUpperCase();
+    document.getElementById('detailName').textContent   = b.name || '—';
+    document.getElementById('detailId').textContent     = `Booking #${b.id}`;
+    document.getElementById('detailStatusBadges').innerHTML =
+      approveBadgeHTML(b.approvestatus) + ' ' + enquiryBadgeHTML(b.enquirystatus);
+
+    // Customer Tab
+    document.getElementById('gridCustomer').innerHTML = [
+      infoCard('Customer Name',   b.name,         'fa-user',           '#A82323'),
+      infoCard('Mobile Number',   b.Mobileno,     'fa-phone-alt',      '#1cc88a'),
+      infoCard('Delivery Address',b.deliveryAdddress, 'fa-map-marker-alt','#e74a3b', true),
+      infoCard('Booked On',       `${formatDate(b.created_at)} at ${formatTime(b.created_at)}`, 'fa-calendar-alt', '#A82323'),
+    ].join('');
+
+    // Party Info Tab
+    document.getElementById('gridParty').innerHTML = [
+      infoCard('Restaurant',    b.restaurant_name,   'fa-store',        '#4e73df'),
+      infoCard('Party Type',    partyLabel(b.partytype), partyIcon(b.partytype), '#f6c23e'),
+      infoCard('Party Date & Time', `${formatDate(b.partydatetime)} at ${formatTime(b.partydatetime)}`, 'fa-calendar-check', '#1cc88a'),
+      infoCard('Approval Status', b.approvestatus,  'fa-clipboard-check','#A82323'),
+      infoCard('Enquiry Status',  b.enquirystatus,  'fa-tasks',         '#858796'),
+    ].join('');
+
+    // Order Details Tab
+    document.getElementById('gridOrder').innerHTML = `
+      <div class="col-12">
+        <div class="detail-info-full">
+          <div class="detail-info-label"><i class="fas fa-clipboard-list detail-info-icon" style="color:#4e73df;"></i>Order Details</div>
+          <div class="detail-info-value" style="white-space:pre-wrap;">${b.order_details || '—'}</div>
+        </div>
+      </div>`;
+
+    // Reset to first tab
+    $('#detailTabs a[href="#tabCustomer"]').tab('show');
+    $('#detailModal').modal('show');
+  }
+
+  // ── Render Table ──────────────────────────────────────────────────────────
+  let currentFilter = 'all';
+  function renderTable(filter = 'all', search = '') {
+    currentFilter = filter;
+    const tbody = document.getElementById('bookingTbody');
+
+    // Filter logic: 'pending'/'approved' maps to approvestatus; 'completed' maps to enquirystatus
+    const filtered = bookings.filter(b => {
+      let matchFilter = true;
+      if (filter === 'pending')   matchFilter = b.approvestatus === 'pending';
+      else if (filter === 'approved') matchFilter = b.approvestatus === 'approved';
+      else if (filter === 'completed') matchFilter = b.enquirystatus === 'completed';
+      const matchSearch = !search || JSON.stringify(b).toLowerCase().includes(search.toLowerCase());
+      return matchFilter && matchSearch;
+    });
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="9">
+        <div class="vr-empty-state">
+          <i class="fas fa-glass-cheers"></i>
+          <p class="vr-empty-title">No Party Bookings Found</p>
+          <small class="vr-empty-subtitle">There are no bookings matching the selected filter.</small>
+        </div></td></tr>`;
+      document.getElementById('footerCount').textContent = 0;
+      return;
+    }
+
+    tbody.innerHTML = filtered.map((b, i) => `
+      <tr>
+        <td><span class="vr-cell-muted font-weight-bold">${i + 1}</span></td>
+        <td>
+          <div class="d-flex align-items-center">
+            <div class="vr-avatar">${(b.name || 'P')[0].toUpperCase()}</div>
+            <div>
+              <div class="vr-rest-name">${b.name || '—'}</div>
+              <small class="vr-rest-id">Booking #${b.id}</small>
+            </div>
+          </div>
+        </td>
+        <td>
+          <span class="vr-cell-text-sm">
+            <i class="fas fa-store mr-1" style="color:#4e73df;font-size:10px;"></i>${b.restaurant_name || '—'}
+          </span>
+        </td>
+        <td>
+          <span class="pb-party-badge ${b.partytype || ''}">
+            <i class="fas ${partyIcon(b.partytype)} mr-1"></i>${partyLabel(b.partytype)}
+          </span>
+        </td>
+        <td><span class="vr-cell-text-sm"><i class="fas fa-phone-alt mr-1" style="color:#1cc88a;font-size:10px;"></i>${b.Mobileno || '—'}</span></td>
+        <td>${approveBadgeHTML(b.approvestatus)}</td>
+        <td>${enquiryBadgeHTML(b.enquirystatus)}</td>
+        <td>
+          <div class="vr-cell-text-sm"><i class="fas fa-calendar-alt mr-1" style="color:#A82323;font-size:10px;"></i>${formatDate(b.created_at)}</div>
+          <small class="vr-cell-time">${formatTime(b.created_at)}</small>
+        </td>
+        <td>${actionHTML(b)}</td>
+      </tr>`).join('');
+
+    document.getElementById('footerCount').textContent = filtered.length;
+  }
+
+  // ── Summary Cards ─────────────────────────────────────────────────────────
+  function renderSummaryCards() {
+    const pending   = bookings.filter(b => b.approvestatus === 'pending').length;
+    const approved  = bookings.filter(b => b.approvestatus === 'approved').length;
+    const completed = bookings.filter(b => b.enquirystatus === 'completed').length;
+    const total     = bookings.length;
+    document.getElementById('summaryCards').innerHTML = `
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card_ border-left-warning shadow h-100 py-2 bg-white">
+          <div class="card-body">
+            <div class="row no-gutters align-items-center">
+              <div class="col mr-2">
+                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Pending Approval</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">${pending}</div>
+              </div>
+              <div class="col-auto"><i class="fas fa-hourglass-half fa-2x text-warning"></i></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card_ border-left-success shadow h-100 py-2 bg-white">
+          <div class="card-body">
+            <div class="row no-gutters align-items-center">
+              <div class="col mr-2">
+                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Approved</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">${approved}</div>
+              </div>
+              <div class="col-auto"><i class="fas fa-check-circle fa-2x text-success"></i></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card_ shadow h-100 py-2 bg-white" style="border-left:5px solid #17a2b8;border-radius:8px;">
+          <div class="card-body">
+            <div class="row no-gutters align-items-center">
+              <div class="col mr-2">
+                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Enquiry Completed</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">${completed}</div>
+              </div>
+              <div class="col-auto"><i class="fas fa-flag-checkered fa-2x text-info"></i></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card_ border-left-primary shadow h-100 py-2 bg-white">
+          <div class="card-body">
+            <div class="row no-gutters align-items-center">
+              <div class="col mr-2">
+                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Bookings</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">${total}</div>
+              </div>
+              <div class="col-auto"><i class="fas fa-glass-cheers fa-2x text-primary"></i></div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  // ── Event Delegation ──────────────────────────────────────────────────────
+  document.addEventListener('click', function(e) {
+    const viewBtn = e.target.closest('.view-detail-btn');
+    if (viewBtn) {
+      e.preventDefault();
+      openDetailModal(parseInt(viewBtn.dataset.id));
+      return;
+    }
+    const actionBtn = e.target.closest('.action-btn');
+    if (actionBtn) {
+      e.preventDefault();
+      const confirmMsg = actionBtn.dataset.confirm || 'Are you sure?';
+      if (!confirm(confirmMsg)) return;   // ← stop here if user clicks Cancel
+
+      const id     = parseInt(actionBtn.dataset.id);
+      const action = actionBtn.dataset.action;
+      const b      = bookings.find(x => x.id === id);
+      if (!b) return;
+
+      fetch("{% url 'partyBookingAction' %}", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken'),
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({ id: id, action: action })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status) {
+          if (action === 'approve')          b.approvestatus  = 'approved';
+          else if (action === 'revoke_approve') b.approvestatus = 'pending';
+          else if (action === 'complete_enquiry') b.enquirystatus = 'completed';
+          renderSummaryCards();
+          renderTable(currentFilter, document.getElementById('tableSearch').value);
+        } else {
+          alert(data.message || 'Action failed.');
+        }
+      })
+      .catch(() => alert('Network error.'));
+    }
+  });
+
+  // ── Filter Buttons ────────────────────────────────────────────────────────
+  document.querySelectorAll('.vr-filter-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      document.querySelectorAll('.vr-filter-btn').forEach(b => b.className = 'vr-btn-filter vr-filter-btn');
+      this.classList.add(`active-${this.dataset.filter}`);
+      renderTable(this.dataset.filter, document.getElementById('tableSearch').value);
+    });
+  });
+
+  // ── Search ────────────────────────────────────────────────────────────────
+  document.getElementById('tableSearch').addEventListener('keyup', function() {
+    renderTable(currentFilter, this.value);
+  });
+
+  // ── Last Updated ──────────────────────────────────────────────────────────
+  function setLastUpdated() {
+    const now = new Date();
+    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    let h = now.getHours(), m = now.getMinutes(), ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    document.getElementById('lastUpdated').textContent =
+      `${String(now.getDate()).padStart(2,'0')} ${months[now.getMonth()]} ${now.getFullYear()}, ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')} ${ampm}`;
+  }
+
+  // ── CSRF helper ───────────────────────────────────────────────────────────
+  function getCookie(name) {
+    let c = null;
+    document.cookie.split(';').forEach(s => {
+      const [k, v] = s.trim().split('=');
+      if (k === name) c = decodeURIComponent(v);
+    });
+    return c;
+  }
+
+  // ── Load from API ─────────────────────────────────────────────────────────
+  function loadBookings() {
+    fetch("{% url 'partyBookingListView' %}", {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status) {
+        bookings = data.bookings;
+        renderSummaryCards();
+        renderTable('all');
+        setLastUpdated();
+      } else {
+        console.error('Failed to load party bookings');
+      }
+    })
+    .catch(err => console.error('Error:', err));
+  }
+
+  loadBookings();
+</script>
+
+{% include 'footer.html' %}
+{% include 'footer_link.html' %}

@@ -91,5 +91,7 @@ urlpatterns = [
     path('spotlights/update/',update_spotlight,  name='update_spotlight'),
     path('spotlights/delete/',delete_spotlight,  name='delete_spotlight'),
     
+    path('party-bookings/',partyBookingListView,  name='partyBookingListView'),
+    path('party-bookings/action/',partyBookingAction,  name='partyBookingAction'),
     
 ]

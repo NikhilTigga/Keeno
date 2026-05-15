@@ -12,7 +12,7 @@ from myapi.models import *
 from django.views import View
 from django.shortcuts import redirect
 from vendorapi.models import GlobalCategory
-from vendorapi.models import Restaurant,DeliveryPartnerForm,SetOrderIncentive,DeliveryPartnerWallet,WalletTransaction,OrderCompletion ,CommissionSetting , VendorPayout, Orders , Banner,VendorRegistration,  AboutUs ,HelpSupport , Spotlight
+from vendorapi.models import Restaurant,DeliveryPartnerForm,SetOrderIncentive,DeliveryPartnerWallet,WalletTransaction,OrderCompletion ,CommissionSetting , VendorPayout, Orders , Banner,VendorRegistration,  AboutUs ,HelpSupport , Spotlight ,RestaurantPartyBooking
 from django.db.models import Sum
 from datetime import datetime
 from django.views.decorators.csrf import csrf_exempt
@@ -1926,3 +1926,76 @@ def delete_spotlight(request):
  
     spotlight.delete()
     return JsonResponse({"status": True, "message": "Spotlight deleted successfully."})
+
+
+
+
+
+
+
+                      #Party Enquiry List Section
+# ── List View ──────────────────────────────────────────────────────────────────
+
+def partyBookingListView(request):
+    """
+    GET  → renders the template
+    GET  + X-Requested-With: XMLHttpRequest  → returns JSON list of bookings
+    """
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        qs = RestaurantPartyBooking.objects.select_related('restaurant', 'user').order_by('-created_at')
+        bookings = []
+        for b in qs:
+            bookings.append({
+                'id':              b.id,
+                'name':            b.name,
+                'Mobileno':        b.Mobileno,
+                'restaurant_name': b.restaurant.restaurantname if b.restaurant else '—',
+                'partytype':       b.partytype,
+                'order_details':   b.order_details,
+                'deliveryAdddress': b.deliveryAdddress,
+                'approvestatus':   b.approvestatus,
+                'enquirystatus':   b.enquirystatus,
+                'partydatetime':   b.partydatetime.isoformat() if b.partydatetime else None,
+                'created_at':      b.created_at.isoformat() if b.created_at else None,
+            })
+        return JsonResponse({'status': True, 'bookings': bookings})
+ 
+    return render(request, 'sideBarPages/partyenquirylist.html')
+ 
+ 
+# ── Action View ────────────────────────────────────────────────────────────────
+
+def partyBookingAction(request):
+    """
+    POST JSON: { id, action }
+    action values:
+        approve          → approvestatus = approved
+        revoke_approve   → approvestatus = pending
+        complete_enquiry → enquirystatus = completed
+    """
+    if request.method != 'POST':
+        return JsonResponse({'status': False, 'message': 'Invalid method.'})
+ 
+    try:
+        payload = json.loads(request.body)
+        booking_id = int(payload.get('id'))
+        action     = payload.get('action')
+    except (ValueError, TypeError, KeyError):
+        return JsonResponse({'status': False, 'message': 'Invalid payload.'})
+ 
+    try:
+        booking = RestaurantPartyBooking.objects.get(id=booking_id)
+    except RestaurantPartyBooking.DoesNotExist:
+        return JsonResponse({'status': False, 'message': 'Booking not found.'})
+ 
+    if action == 'approve':
+        booking.approvestatus = 'approved'
+    elif action == 'revoke_approve':
+        booking.approvestatus = 'pending'
+    elif action == 'complete_enquiry':
+        booking.enquirystatus = 'completed'
+    else:
+        return JsonResponse({'status': False, 'message': 'Unknown action.'})
+ 
+    booking.save()
+    return JsonResponse({'status': True, 'message': 'Updated successfully.'})

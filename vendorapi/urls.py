@@ -32,4 +32,9 @@ urlpatterns = [
     
     path('pendingOrderCountAPI',PendingOrderCountAPI.as_view(),name='pendingOrderCountAPI'),
     
+    path('partyEnquiryByRestaurantView',PartyEnquiryByRestaurantView.as_view(),name='partyEnquiryByRestaurantView'),
+    
+    path('updatepartyEnquiryStatus',UpdatepartyEnquiryStatus.as_view(),name='updatepartyEnquiryStatus'),
+    
+    path('updateRestaurantisOpenStatus',UpdateRestaurantisOpenStatus.as_view(),name='updateRestaurantisOpenStatus'),
 ]

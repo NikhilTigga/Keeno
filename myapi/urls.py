@@ -93,4 +93,8 @@ urlpatterns = [
     
     path('userWishlistView',UserWishlistView.as_view(),name='userWishlistView'),
     
+    path('bannerListAPI',BannerListAPI.as_view(),name='bannerListAPI'),
+    
+   
+    
  ]

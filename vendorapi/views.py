@@ -2253,4 +2253,106 @@ class PendingOrderCountAPI(View):
                 "message": str(e)
             }, status=500)
             
+        
+@method_decorator(csrf_exempt, name='dispatch')
+class PartyEnquiryByRestaurantView(View):
+
+    def post(self, request):
+
+        try:
+            restaurantid = request.POST.get("restaurantid")
+
+            if not restaurantid:
+                return JsonResponse({
+                    "status": False,
+                    "message": "restaurantid is required"
+                })
+
+            enquiries = RestaurantPartyBooking.objects.filter(
+                restaurant_id=restaurantid , approvestatus='approved'
+            ).order_by("-created_at")
+
+            enquiry_list = []
+
+            for enquiry in enquiries:
+
+                enquiry_list.append({
+                    "id": enquiry.id,
+                    "user_id": enquiry.user.id,
+                    "user_name": enquiry.user.name,
+                    "user_email": enquiry.user.email,
+                    "user_phone": enquiry.user.phone_no,
+                    "name": enquiry.name,
+                    "mobile_no": enquiry.Mobileno,
+                    "order_details": enquiry.order_details,
+                    "delivery_address": enquiry.deliveryAdddress,
+                    "approvestatus":enquiry.approvestatus,
+                    "enquirystatus":enquiry.enquirystatus,
+                    "partytype":enquiry.partytype,
+                    "partydatetime":enquiry.partydatetime,
+                    "created_at": enquiry.created_at.strftime("%Y-%m-%d %H:%M:%S")
+                })
+
+            return JsonResponse({
+                "status": True,
+                "message": "Enquiry list fetched successfully",
+                "data": enquiry_list
+            })
+
+        except Exception as e:
+            return JsonResponse({
+                "status": False,
+                "message": str(e)
+            })
             
+@method_decorator(csrf_exempt, name='dispatch')
+class UpdatepartyEnquiryStatus(View):
+    def post(self, request):
+        partyenquiryid = request.POST.get("enquiryid")
+        
+        partystatus = request.POST.get("status")
+        
+        
+        party = RestaurantPartyBooking.objects.get(id= partyenquiryid)
+        
+        party.enquirystatus = partystatus
+        
+        party.save()
+        
+        return JsonResponse({
+            "status":True,
+            "message":"Party Enquiry Status has been updated successfually"
+        })
+        
+        
+@method_decorator(csrf_exempt, name='dispatch')        
+class UpdateRestaurantisOpenStatus(View):
+    
+    def get(self , request):
+        restaurantid = request.GET.get("restaurantid")
+        restaurantis = Restaurant.objects.get(id = restaurantid)
+        
+        return JsonResponse({
+            
+            "status":True,
+            "resid": restaurantis.id,
+            "is_open_status": restaurantis.is_open,
+        })
+    
+    def post(self,request):
+        restaurantid = request.POST.get("restaurantid")
+        
+        status = request.POST.get("status",True)
+        
+        restaurantis = Restaurant.objects.get(id = restaurantid)
+        
+        restaurantis.is_open = status
+        
+        restaurantis.save()
+        
+        return JsonResponse({
+            "status":True,
+            "message":"Reaturant open status is updated successfually"
+        })
+        
+        

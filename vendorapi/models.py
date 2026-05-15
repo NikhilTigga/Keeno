@@ -1380,8 +1380,33 @@ class UserWalletTransaction(models.Model):
 
 
 class RestaurantPartyBooking(models.Model):
+    
+    APPROVE_STATUS = [
+        ('pending','Pending'),
+        ('approved','Approved')
+    ]
+    
+    ENQUIRY_STATUS =[
+        ('pending','Pending'),
+        ('cancel','Cancel'),
+        ('completed','Completed')
+    ]
+    
+    PARTY_CHOICE =[
+        
+        ('biryaniparty','Biryani Party'),
+        ('birthdayparty','Birthday Party'),
+        ('hostalparty','Hostal Party')
+    ]
     restaurant = models.ForeignKey(Restaurant, on_delete= models.CASCADE, related_name="pary_bookings")
-    user = models.ForeignKey(UserRegister, on_delete = models.CASCADE, related_name="party_bookings")
+    user = models.ForeignKey(UserRegister, on_delete = models.CASCADE, related_name="party_bookings" )
+    partytype = models.CharField(max_length=100, choices=PARTY_CHOICE , null=True , blank=True)
+    
+    partydatetime = models.DateTimeField( null=True , blank=True)
+    
+    approvestatus = models.CharField(max_length=100, choices=APPROVE_STATUS , default='pending')
+    enquirystatus = models.CharField(max_length=100, choices=ENQUIRY_STATUS , default='pending')
+    
     name = models.CharField(max_length=255)
     Mobileno = models.CharField(max_length=15)
     order_details = models.TextField()
